@@ -90,8 +90,7 @@ plt.xlabel('temp')
 plt.ylabel('diff')
 plt.show()
 
-# Calculate diff = Jewell angle - Calc angle (deg)
-# Calculate ratio = Jewell angle / calc angle (deg)
-# (Include division by zero protection)
+# Try for dif
+# Try for ratio
+# Try for higher order polynomials
 
-# numpy.polyfit(x, y, deg)
