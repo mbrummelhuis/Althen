@@ -24,9 +24,9 @@ class DriftDFCreator:
         ax3.plot(sb3_list, marker = '', linestyle='-')
         ax4.plot(reflist, marker = '', linestyle='-')
 
-        ax1.set_ylabel('SB1')
-        ax2.set_ylabel('SB2')
-        ax3.set_ylabel('SB3')
+        ax1.set_ylabel('SB1 [deg]')
+        ax2.set_ylabel('SB2 [deg]')
+        ax3.set_ylabel('SB3 [deg]')
         ax4.set_ylabel('Jewell')
 
         ax1.grid(True)
