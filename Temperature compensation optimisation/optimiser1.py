@@ -5,7 +5,8 @@ import os
 import matplotlib.pyplot as plt
 
 def polynomial(x, coeffs):
-    """ Returns a polynomial for ``x`` values for the ``coeffs`` provided.
+    """ 
+    Returns a polynomial for ``x`` values for the ``coeffs`` provided.
 
     The coefficients must be in ascending order (``x**0`` to ``x**o``).
     """
@@ -72,6 +73,18 @@ for n in range(df.shape[0]):
 df["diff"] = diff
 df["ratio"] = ratio
 
+# Plot the data for analysis
+x = df["temp"]
+y = df["a_true"]
+plt.scatter(df["temp"], df["a_meas"], label = 'Measured')
+plt.scatter(df["temp"], df["a_true"], label = 'True')
+plt.xlabel('temp')
+plt.ylabel('angle')
+plt.legend()
+plt.grid()
+plt.show()
+
+
 # Comment one y out
 x = df['temp'].tolist()
 y = df["diff"].tolist()
@@ -80,8 +93,6 @@ y = df["diff"].tolist()
 coeffs = np.polyfit(x,y,1).tolist()
 coeffs.reverse()
 print(coeffs)
-with pd.option_context('display.max_rows', 255):
-    print(df)
 
 plt.scatter(x,y)
 x.sort()
