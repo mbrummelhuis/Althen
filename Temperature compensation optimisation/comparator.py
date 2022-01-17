@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 class Comparator:
     def __init__(self):
         self.path_to_folder = os.path.abspath(__file__).removesuffix('comparator.py') + 'Scrubbed data'
-        self.number_smartbricks = 1
 
         self.df1 = None
         self.df2 = None
