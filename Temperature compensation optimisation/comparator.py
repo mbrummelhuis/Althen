@@ -208,7 +208,7 @@ class Comparator:
         return
 
     def plotAmeasAdiff(self):
-        self.loadData()
+        self.loadDatav2()
         for i in range(len(self.names)):
             plt.scatter(self.dfs[i]['meas angle'], self.dfs[i]['meas angle']-self.dfs[i]['ref angle'],
                 color=self.colours[i], label="SB"+str(i+1))
@@ -226,13 +226,14 @@ class Comparator:
         Plots 3D scatterplot with dependent variable (Ameas-Aref) vs measured temperature (Tmeas) and measured angle (Ameas).
         Different Smartbricks are plotted in different colours.
         """
-        self.loadData()
+        self.loadDatav2()
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
 
-        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['meas angle']-self.df1['ref angle'], color='b', label="SB1")
-        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['meas angle']-self.df2['ref angle'], color='r', label="SB2")
-        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['meas angle']-self.df3['ref angle'], color='g', label="SB3")
+        for i in range(len(self.names)):
+            ax.scatter(self.dfs[i]['meas temp'], self.dfs[i]['meas angle'], 
+                self.dfs[i]['meas angle']-self.dfs[i]['ref angle'], color=self.colours[i], label="SB"+str(i+1))
+
         ax.grid()
         ax.legend()
 
@@ -243,12 +244,14 @@ class Comparator:
         return
     
     def plotTmeasAmeasAref(self):
+        self.loadDatav2()
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
 
-        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['ref angle'], color='b', label="SB1")
-        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['ref angle'], color='r', label="SB2")
-        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['ref angle'], color='g', label="SB3")
+        for i in range(len(self.names)):
+            ax.scatter(self.dfs[i]['meas temp'], self.dfs[i]['meas angle'], 
+                self.dfs[i]['ref angle'], color=self.colours[i], label="SB"+str(i+1))
+
         ax.grid()
         ax.legend()
 
@@ -263,37 +266,24 @@ class Comparator:
         Plots 3D scatterplot with dependent variable (Ameas/Aref) vs measured temperature (Tmeas) and measured angle (Ameas).
         Different Smartbricks are plotted in different colours.
         """
-        self.loadData()
+        self.loadDatav2()
         # Delete -1, 0, 1 angles
-        droplist1 = []
-        droplist2 = []
-        droplist3 = []
-
-        for n in range(self.df1.shape[0]):
-            if abs(self.df1['ref angle'][n]) < 1.1:
-                droplist1.append(n)
-
-        for n in range(self.df2.shape[0]):
-            if abs(self.df2['ref angle'][n]) < 1.1:
-                droplist2.append(n)
-
-        for n in range(self.df3.shape[0]):
-            if abs(self.df3['ref angle'][n]) < 1.1:
-                droplist3.append(n)
-
-        self.df1_dropped = self.df1.drop(droplist1, axis=0, inplace=True)
-        self.df2_dropped = self.df2.drop(droplist2, axis=0, inplace=True)
-        self.df3_dropped = self.df3.drop(droplist3, axis=0, inplace=True)
+        droplist = []
+        dfs_dropped = []
+        for i in range(len(self.names)):
+            droplist.append([])
+            for n in range(self.dfs[i].shape[0]):
+                if abs(self.dfs[i]['ref angle'][n]) < 1.1:
+                    droplist[i].append(n)
+            
+            dfs_dropped.append(self.dfs[i].drop(droplist[i], axis=0, inplace=True))
 
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
+        for i in range(len(self.names)):
+            ax.scatter(self.dfs[i]['meas temp'], self.dfs[i]['meas angle'], self.dfs[i]['meas angle'] / self.dfs[i]['ref angle'], 
+                color=self.colours[i], label="SB"+str(i+1))
 
-        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['meas angle'] / self.df1['ref angle'], 
-            color='b', label="SB1")
-        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['meas angle'] / self.df2['ref angle'], 
-            color='r', label="SB2")
-        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['meas angle'] / self.df3['ref angle'], 
-            color='g', label="SB3")
         ax.grid()
         ax.legend()
 
@@ -617,8 +607,11 @@ if __name__ == "__main__":
     names = ['SB1', 'SB2', 'SB3']
     comparator = Comparator(names=names)
     #comparator.plotTempData()
-    comparator.plotArefAdiff()
-    comparator.plotTmeasAdiff()
-    comparator.plotAmeasAdiff()
+    #comparator.plotArefAdiff()
+    #comparator.plotTmeasAdiff()
+    #comparator.plotAmeasAdiff()
+    #comparator.plotTmeasAmeasAdiff()
+    #comparator.plotTmeasAmeasAref()
+    comparator.plotTmeasAmeasAfactor1()
 
     #comparator.plotZdata()
