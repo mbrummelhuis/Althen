@@ -1,9 +1,14 @@
 import math
 import pandas as pd
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.dates as mdates
 import datetime
+
+# Put in date in timestamp format: 'YYYY-MM-DD HH:MM:SS'
+plot_from_date = '2022-01-10 00:00:00'
+
 
 # Function from internet to convert hex strings into signed integers of specified number of bits
 def twos_complement(hexstr,bits):
@@ -12,14 +17,17 @@ def twos_complement(hexstr,bits):
         value -= 1 << bits
     return value
 
+path = os.path.abspath(__file__).removesuffix('sigfox_msg_analysercsv.py')
 asking = True
 while asking == True:
     # Ask for device ID and transform to filename
     devID = input("Enter device ID: ")
-    filename = "export-device-" + devID + "-messages.csv"
+
+    filename = path + "export-device-" + devID + "-messages.csv"
 
     # Open CSV file to dataframe
     try:
+        print("Opening:", filename)
         df = pd.read_csv(filename , delimiter = ";")
         asking = False
     except:
@@ -35,7 +43,7 @@ finally:
     df = df.set_index('Timestamp') # Set the timestamp as index
 print(df)
 # Delete data before set date
-delete_before = pd.Timestamp('2021-12-12 00:00:00') # Year, month, date
+delete_before = pd.Timestamp(plot_from_date) # Year, month, date
 df = df.loc[(df.index > delete_before)]
 print(df)
 
@@ -74,7 +82,7 @@ print(df)
 
 fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(nrows=6,ncols=1,sharex=True)
 fig.set_size_inches(19.2,10.8)
-fig.canvas.set_window_title(devID)
+fig.canvas.manager.set_window_title(devID)
 
 ax1.plot(df.iloc[ : , [3]], marker = '', linestyle='-')
 ax2.plot(df.iloc[ : , [4]], marker = '', linestyle='-')
@@ -97,6 +105,8 @@ ax4.grid(True)
 ax5.grid(True)
 ax6.grid(True)
 
+save_path = os.path.abspath(__file__).removesuffix('sigfox_msg_analysercsv.py')
+
 plt.tight_layout()
-plt.savefig(devID + '.png', dpi=100)
+plt.savefig(save_path + devID + '.png', dpi=100)
 plt.show()

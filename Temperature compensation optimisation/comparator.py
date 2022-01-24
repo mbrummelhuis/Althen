@@ -6,18 +6,60 @@ import matplotlib.pyplot as plt
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class Comparator:
-    def __init__(self):
+    def __init__(self, names):
         self.path_to_folder = os.path.abspath(__file__).removesuffix('comparator.py') + 'Scrubbed data'
+        self.names = names
+        self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+        self.dfs = []
+        self.filenames = []
+        for n in range(len(self.names)):
+            self.filenames.append(os.path.join(self.path_to_folder, self.names[n] + '_tempreplog_scrubbed_manual.txt'))
 
         self.df1 = None
         self.df2 = None
         self.df3 = None
     
+    def loadDatav2(self):
+        for i in range(len(self.names)):
+            # Load data into self.df and calculate angle from accelero data
+            names = ["Timestamp", "X", "Y", "Z", "del1 c ang", "meas temp", "del2 rep", "ref angle", "ref temp","del3 optemp"]
+            self.dfs.append(pd.read_csv(self.filenames[i], header=None, names=names))
+            self.dfs[i]['Timestamp'] = pd.to_datetime(self.dfs[i]["Timestamp"], format = "%Y-%m-%d %H:%M:%S")
+
+            meas_ang = []
+            for n in range(self.dfs[i].shape[0]):
+                if self.dfs[i]["Z"][n] < 0:
+                    meas_ang.append(abs(self.dfs[i]["Z"][n]/math.sqrt(self.dfs[i]["X"][n] ** 2 + self.dfs[i]["Y"][n] ** 2) / 
+                        math.pi * 180))
+                elif self.dfs[i]["Z"][n] >= 0:
+                    meas_ang.append(abs(self.dfs[i]["Z"][n]/math.sqrt(self.dfs[i]["X"][n] ** 2 + self.dfs[i]["Y"][n] ** 2) / 
+                        math.pi * 180)*-1)
+            
+            self.dfs[i]["meas angle"] = meas_ang
+
+            # Delete unnecessary columns and order 
+            self.dfs[i] = self.dfs[i].drop(["del1 c ang", "del2 rep", "del3 optemp"], axis=1)
+
+            # Check and correct TD temperature under 0 (they get overflow)
+            for n in range(self.dfs[i].shape[0]):
+                if self.dfs[i]['meas temp'][n] > 2000:
+                    self.dfs[i]['meas temp'][n] = self.dfs[i]['meas temp'][n] - 65536
+                else:
+                    pass
+            self.dfs[i]['meas temp'] = self.dfs[i]['meas temp'].div(10) 
+
+            # Reorder columns
+            cols = self.dfs[i].columns.tolist()
+            cols = cols[:4] + [cols[5]] + [cols[7]] + [cols[6]] + [cols[4]]
+            self.dfs[i] = self.dfs[i][cols]
+        return
+
     def loadData(self):
         """
         Loads the Smartbrick data of the three Smartbricks into three separate dataframes (attributes of class).
         Dataframes are automatically scrubbed and only contain timestamp, measured angle and temperature and ref angle and temperature.
-        """            
+        """ 
+
         # DATAFRAME 1-------------------------------
         filename = self.path_to_folder + "\SB1_tempreplog_scrubbed_manual.txt"
         names = ["Timestamp", "X", "Y", "Z", "del1 c ang", "meas temp", "del2 rep", "ref angle", "ref temp","del3 optemp"]
@@ -113,63 +155,71 @@ class Comparator:
         cols3 = self.df3.columns.tolist()
         cols3 = cols3[:4] + [cols3[5]] + [cols3[7]] + [cols3[6]] + [cols3[4]]
         self.df3 = self.df3[cols3] 
+        return
 
     def plotTempData(self):
         """
         Plots scatterplots of the data, displaying the different Smartbricks in different colours.
         """
-        self.loadData()
-        plt.scatter(self.df1['ref temp'], self.df1['meas temp']-self.df1['ref temp'], color='b', label="SB1")
-        plt.scatter(self.df2['ref temp'], self.df2['meas temp']-self.df2['ref temp'], color='r', label="SB2")
-        plt.scatter(self.df3['ref temp'], self.df3['meas temp']-self.df3['ref temp'], color='g', label="SB3")
+        self.loadDatav2()
+        for i in range(len(self.names)):
+            plt.scatter(self.dfs[i]['ref temp'], self.dfs[i]['meas temp']-self.dfs[i]['ref temp'], 
+                color=self.colours[i], label="SB"+str(i+1))
         plt.grid()
         plt.legend()
         plt.title("Temperature dependence of temperature sensor")
         plt.xlabel('Reference temperature')
         plt.ylabel('Tmeas - Tref')
         plt.show()
+        return
 
     def plotArefAdiff(self):
         """
         Plots scatterplots of the angle data, displaying the differnet Smartbricks in different colours.
         """
-        self.loadData()
-        plt.scatter(self.df1['ref angle'], self.df1['meas angle']-self.df1['ref angle'], color='b', label="SB1")
-        plt.scatter(self.df2['ref angle'], self.df2['meas angle']-self.df2['ref angle'], color='r', label="SB2")
-        plt.scatter(self.df3['ref angle'], self.df3['meas angle']-self.df3['ref angle'], color='g', label="SB3")
+        self.loadDatav2()
+        for i in range(len(self.names)):
+            plt.scatter(self.dfs[i]['ref angle'], self.dfs[i]['meas angle']-self.dfs[i]['ref angle'],
+                color = self.colours[i], label="SB"+str(i+1))
+
         plt.grid()
         plt.legend()
         plt.title("Temperature dependence of angle sensor")
         plt.xlabel('Reference angle')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
     
     def plotTmeasAdiff(self):
         """
         Plots scatterplot of angle difference data vs temperature, displaying the differnet Smartbricks in different colours.
         """
-        self.loadData()
-        plt.scatter(self.df1['meas temp'], self.df1['meas angle']-self.df1['ref angle'], color='b', label="SB1")
-        plt.scatter(self.df2['meas temp'], self.df2['meas angle']-self.df2['ref angle'], color='r', label="SB2")
-        plt.scatter(self.df3['meas temp'], self.df3['meas angle']-self.df3['ref angle'], color='g', label="SB3")
+        self.loadDatav2()
+        for i in range(len(self.names)):
+            plt.scatter(self.dfs[i]['meas temp'], self.dfs[i]['meas angle']-self.dfs[i]['ref angle'], 
+                color=self.colours[i], label="SB"+str(i+1))
+
         plt.grid()
         plt.legend()
         plt.title("Temperature dependence of angle sensor")
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
 
     def plotAmeasAdiff(self):
         self.loadData()
-        plt.scatter(self.df1['meas angle'], self.df1['meas angle']-self.df1['ref angle'], color='b', label="SB1")
-        plt.scatter(self.df2['meas angle'], self.df2['meas angle']-self.df2['ref angle'], color='r', label="SB2")
-        plt.scatter(self.df3['meas angle'], self.df3['meas angle']-self.df3['ref angle'], color='g', label="SB3")
+        for i in range(len(self.names)):
+            plt.scatter(self.dfs[i]['meas angle'], self.dfs[i]['meas angle']-self.dfs[i]['ref angle'],
+                color=self.colours[i], label="SB"+str(i+1))
+
         plt.grid()
         plt.legend()
         plt.title("Temperature dependence of angle sensor")
         plt.xlabel('Measured angle')
         plt.ylabel('Ameas - Aref')
-        plt.show()        
+        plt.show() 
+        return       
     
     def plotTmeasAmeasAdiff(self):
         """
@@ -190,6 +240,7 @@ class Comparator:
         ax.set_ylabel('Measured angle')
         ax.set_zlabel('Ameas - Aref')
         plt.show()
+        return
     
     def plotTmeasAmeasAref(self):
         fig = plt.figure()
@@ -205,6 +256,7 @@ class Comparator:
         ax.set_ylabel('Measured angle')
         ax.set_zlabel('Reference angle')
         plt.show()  
+        return
 
     def plotTmeasAmeasAfactor1(self):
         """
@@ -236,9 +288,12 @@ class Comparator:
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
 
-        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['meas angle'] / self.df1['ref angle'], color='b', label="SB1")
-        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['meas angle'] / self.df2['ref angle'], color='r', label="SB2")
-        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['meas angle'] / self.df3['ref angle'], color='g', label="SB3")
+        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['meas angle'] / self.df1['ref angle'], 
+            color='b', label="SB1")
+        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['meas angle'] / self.df2['ref angle'], 
+            color='r', label="SB2")
+        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['meas angle'] / self.df3['ref angle'], 
+            color='g', label="SB3")
         ax.grid()
         ax.legend()
 
@@ -246,6 +301,7 @@ class Comparator:
         ax.set_ylabel('Measured angle')
         ax.set_zlabel('Ameas / Aref')
         plt.show()
+        return
 
     def plotTmeasAmeasAfactor2(self):
         """
@@ -277,9 +333,12 @@ class Comparator:
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
 
-        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['ref angle'] / self.df1['meas angle'], color='b', label="SB1")
-        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['ref angle'] / self.df2['meas angle'], color='r', label="SB2")
-        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['ref angle'] / self.df3['meas angle'], color='g', label="SB3")
+        ax.scatter(self.df1['meas temp'], self.df1['meas angle'], self.df1['ref angle'] / self.df1['meas angle'], 
+            color='b', label="SB1")
+        ax.scatter(self.df2['meas temp'], self.df2['meas angle'], self.df2['ref angle'] / self.df2['meas angle'], 
+            color='r', label="SB2")
+        ax.scatter(self.df3['meas temp'], self.df3['meas angle'], self.df3['ref angle'] / self.df3['meas angle'], 
+            color='g', label="SB3")
         ax.grid()
         ax.legend()
 
@@ -287,6 +346,7 @@ class Comparator:
         ax.set_ylabel('Measured angle')
         ax.set_zlabel('Ameas / Aref')
         plt.show()
+        return
 
     def plotNeg10(self):
         self.loadData()
@@ -319,7 +379,8 @@ class Comparator:
         plt.legend()
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
-        plt.show()          
+        plt.show() 
+        return         
 
     def plotNeg2(self):
         self.loadData()
@@ -352,7 +413,8 @@ class Comparator:
         plt.legend()
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
-        plt.show()  
+        plt.show() 
+        return 
     
     def plotNeg1(self):
         self.loadData()
@@ -386,6 +448,7 @@ class Comparator:
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
 
     def plot0(self):
         self.loadData()
@@ -419,6 +482,7 @@ class Comparator:
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
 
     def plotPos1(self):
         self.loadData()
@@ -452,6 +516,7 @@ class Comparator:
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
 
     def plotPos2(self):
         self.loadData()
@@ -485,6 +550,7 @@ class Comparator:
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
         plt.show()
+        return
 
     def plotPos10(self):
         self.loadData()
@@ -517,7 +583,23 @@ class Comparator:
         plt.legend()
         plt.xlabel('Measured temperature')
         plt.ylabel('Ameas - Aref')
-        plt.show()  
+        plt.show()
+        return
+
+    def plotZdata(self):
+        """
+        Plots Z data for all smartbricks against temperature. First plots all data in one plot, then plots data per angle setting.
+        """
+        self.loadDatav2()
+        for i in range(len(self.names)):
+            plt.scatter(self.dfs[i]['meas temp'], self.dfs[i]['Z'], color = self.colours[i], label='SB'+str(i+1))
+        plt.grid()
+        plt.title('Raw Z against temperature')
+        plt.legend()
+        plt.xlabel('Measured temperature')
+        plt.ylabel('Raw Z')
+        plt.show()
+        return
 
     def printFullDF1(self):
         print("Dataframe Smartbrick 1 -------------------------------------------------------------")
@@ -532,18 +614,11 @@ class Comparator:
         print(self.df3.to_string())
 
 if __name__ == "__main__":
-    comparator = Comparator()
-    comparator.plotTempData()
-    #comparator.plotAmeasAdiff()
-    #comparator.plotTmeasAdiff()
-    #comparator.plotTmeasAmeasAdiff()
-    #comparator.plotTmeasAmeasAfactor1()
-    #comparator.plotTmeasAmeasAfactor2()
-    #comparator.printFullDF1()
-    #comparator.plotNeg10()
-    #comparator.plotNeg2()
-    #comparator.plotNeg1()
-    #comparator.plot0()
-    #comparator.plotPos1()
-    #comparator.plotPos2()
-    #comparator.plotPos10()
+    names = ['SB1', 'SB2', 'SB3']
+    comparator = Comparator(names=names)
+    #comparator.plotTempData()
+    comparator.plotArefAdiff()
+    comparator.plotTmeasAdiff()
+    comparator.plotAmeasAdiff()
+
+    #comparator.plotZdata()
