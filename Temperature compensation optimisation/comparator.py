@@ -3,6 +3,7 @@ import math
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+pd.options.mode.chained_assignment = None  # default='warn'
 
 class Comparator:
     def __init__(self):
