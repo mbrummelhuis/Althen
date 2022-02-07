@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class Comparator:
-    def __init__(self, names):
+    def __init__(self, names=['SB1', 'SB2', 'SB3']):
         self.path_to_folder = os.path.abspath(__file__).removesuffix('comparator.py') + 'Scrubbed data'
         self.names = names
         self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         self.dfs = []
         self.filenames = []
+        self.offsets = [0.128912, -0.5807, -1.09694]
         for n in range(len(self.names)):
             self.filenames.append(os.path.join(self.path_to_folder, self.names[n] + '_tempreplog_scrubbed_manual.txt'))
 
@@ -36,6 +37,7 @@ class Comparator:
                         math.pi * 180)*-1)
             
             self.dfs[i]["meas angle"] = meas_ang
+            self.dfs[i]["meas angle"] = self.dfs[i]["meas angle"]-self.offsets[i]
 
             # Delete unnecessary columns and order 
             self.dfs[i] = self.dfs[i].drop(["del1 c ang", "del2 rep", "del3 optemp"], axis=1)
@@ -43,10 +45,11 @@ class Comparator:
             # Check and correct TD temperature under 0 (they get overflow)
             for n in range(self.dfs[i].shape[0]):
                 if self.dfs[i]['meas temp'][n] > 2000:
-                    self.dfs[i]['meas temp'][n] = self.dfs[i]['meas temp'][n] - 65536
+                    self.dfs[i].loc[n,"meas temp"] = self.dfs[i]['meas temp'][n] - 65536
                 else:
                     pass
-            self.dfs[i]['meas temp'] = self.dfs[i]['meas temp'].div(10) 
+            
+            self.dfs[i]['meas temp']= self.dfs[i]["meas temp"]/10. 
 
             # Reorder columns
             cols = self.dfs[i].columns.tolist()
@@ -606,12 +609,13 @@ class Comparator:
 if __name__ == "__main__":
     names = ['SB1', 'SB2', 'SB3']
     comparator = Comparator(names=names)
+    comparator.loadDatav2()
     #comparator.plotTempData()
     #comparator.plotArefAdiff()
     #comparator.plotTmeasAdiff()
     #comparator.plotAmeasAdiff()
     #comparator.plotTmeasAmeasAdiff()
     #comparator.plotTmeasAmeasAref()
-    comparator.plotTmeasAmeasAfactor1()
+    #comparator.plotTmeasAmeasAfactor1()
 
     #comparator.plotZdata()
