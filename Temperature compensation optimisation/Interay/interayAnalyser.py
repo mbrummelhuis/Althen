@@ -8,20 +8,30 @@ import numpy as np
 class interayAnalyser:
     def __init__(self, sb_numbers, degree=2):
         self.sb_numbers = sb_numbers
-        self.filenames = []
+        self.test_filenames = []
+        self.val_filenames = []
         self.colours = ['b', 'r', 'g']
-        self.paths = []
+        self.test_paths = []
+        self.val_paths = []
         self.dfs = []
+        self.val_dfs = []
+        self.offsets = [1.81427, 1.48468]
         self.poly_degree = degree
 
         for index in range(len(self.sb_numbers)):
-            self.filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_alldata_cleaned_balanced_offset.xlsx')
-            self.paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
-                str(self.sb_numbers[index]), self.filenames[index]))
+            self.test_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_alldata_cleaned_balanced_offset.xlsx')
+            self.test_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
+                str(self.sb_numbers[index]), self.test_filenames[index]))
+            
+            self.val_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_val.xlsx')
+            self.val_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
+                str(self.sb_numbers[index]), self.val_filenames[index]))
+        
+        self.coefs = [-0.0546958, 0.00354598, 0.0017394, 0.00062712, 0.00017706, -0.00013704]
 
-    def loadData(self):
+    def loadTestData(self):
         for i in range(len(self.sb_numbers)):
-            self.dfs.append(pd.read_excel(self.paths[i]))
+            self.dfs.append(pd.read_excel(self.test_paths[i]))
 
             # Rename columns to shorter, more sensible names including units where known
             self.dfs[i] = self.dfs[i].rename({'SmartBrick ('+str(self.sb_numbers[i])+') Battery': 'Battery (V)', 
@@ -39,7 +49,25 @@ class interayAnalyser:
                 'Y w/o offset':'Y'}, axis=1)
             self.dfs[i]['Time'] = pd.to_datetime(self.dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
             self.dfs[i]['Y'] = -1*self.dfs[i]['Y']
-            print(self.dfs[i])
+        return
+    
+    def loadValData(self):
+        for i in range(len(self.sb_numbers)):
+            self.val_dfs.append(pd.read_excel(self.val_paths[i]))
+            # Rename columns to shorter, more sensible names including units where known
+            self.val_dfs[i] = self.val_dfs[i].rename({'SmartBrick ('+str(self.sb_numbers[i])+') Battery': 'Battery (V)', 
+                'SmartBrick ('+str(self.sb_numbers[i])+') Cause': 'Trigger',
+                'SmartBrick ('+str(self.sb_numbers[i])+') Humidity': 'Humidity (%)',
+                'SmartBrick ('+str(self.sb_numbers[i])+') Signal Strength':'Signal (dB)',
+                'SmartBrick ('+str(self.sb_numbers[i])+') Temperature':'Temp (C)',
+                'SmartBrick ('+str(self.sb_numbers[i])+') X':'X',
+                'SmartBrick ('+str(self.sb_numbers[i])+') X ADC':'X ADC',
+                'SmartBrick ('+str(self.sb_numbers[i])+') Y':'Y (off)',
+                'SmartBrick ('+str(self.sb_numbers[i])+') Y ADC':'Y ADC',
+                'Y w/o offset':'Y',
+                'ref angle':'ref'}, axis=1)
+            self.val_dfs[i]['Time'] = pd.to_datetime(self.val_dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
+            print(self.val_dfs[i])
         return
     
     def polyFitSingle(self):
@@ -168,13 +196,51 @@ class interayAnalyser:
         ax.legend()
         plt.show()
 
+    def beforeAfter(self,i):
+        print(self.sb_numbers[i])
+        self.val_dfs[i]['comp angle'] = self.val_dfs[i]['Y']+ self.coefs[0]+self.coefs[1]*self.val_dfs[i]["Y"]+self.coefs[2]*self.val_dfs[i]['Temp (C)']+self.coefs[3]*self.val_dfs[i]["Y"]**2 +self.coefs[4]*self.val_dfs[i]["Y"]*self.val_dfs[i]["Temp (C)"] +self.coefs[5]*self.val_dfs[i]["Temp (C)"]**2
+        
+        
+        plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['comp angle'],label='After comp')       
+        plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['Y'],label='Before comp')   
+
+        plt.grid()
+        plt.legend()
+        plt.title("Difference between ref angle and compensated/measured angle")
+        plt.xlabel('Measured Temperature')
+        plt.ylabel('Difference')
+        plt.show()
+        pass
+
+    def beforeAfterSwapped(self,i):
+        """
+        Swapped offset subtraction and compensation 
+        """
+        print(self.sb_numbers[i])
+        self.val_dfs[i]['comp angle'] = self.val_dfs[i]['Y (off)']+ self.coefs[0]+self.coefs[1]*self.val_dfs[i]["Y (off)"]+self.coefs[2]*self.val_dfs[i]['Temp (C)']+self.coefs[3]*self.val_dfs[i]["Y (off)"]**2 +self.coefs[4]*self.val_dfs[i]["Y (off)"]*self.val_dfs[i]["Temp (C)"] +self.coefs[5]*self.val_dfs[i]["Temp (C)"]**2
+        self.val_dfs[i]['comp angle'] = self.val_dfs[i]['comp angle']-self.offsets[i]
+        
+        plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['comp angle'],label='After comp')       
+        plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['Y'],label='Before comp')   
+
+        plt.grid()
+        plt.legend()
+        plt.title("Difference between ref angle and compensated/measured angle")
+        plt.xlabel('Measured Temperature')
+        plt.ylabel('Difference')
+        plt.show()
+        pass
+
 if __name__ == '__main__':
     SB_numbers = [141421, 141442]
     analyser = interayAnalyser(sb_numbers=SB_numbers)
-    analyser.loadData()
-    analyser.polyFitSingle()
-    analyser.plotModel()
-    analyser.polyFitDouble()
-    analyser.plotModelDouble()
+    analyser.loadTestData()
+    analyser.loadValData()
+    #analyser.polyFitSingle()
+    #analyser.plotModel()
+    #analyser.polyFitDouble()
+    #analyser.plotModelDouble()
+    #analyser.beforeAfter(1)
+    analyser.beforeAfterSwapped(1)
 
 

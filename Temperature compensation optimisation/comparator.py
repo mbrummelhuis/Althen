@@ -21,6 +21,10 @@ class Comparator:
         self.df3 = None
     
     def loadDatav2(self):
+        """
+        Loads the Smartbrick data of the three Smartbricks into a list of dataframes.
+        Dataframes are automatically scrubbed and only contain timestamp, measured angle and temperature and ref angle and temperature.
+        """ 
         for i in range(len(self.names)):
             # Load data into self.df and calculate angle from accelero data
             names = ["Timestamp", "X", "Y", "Z", "del1 c ang", "meas temp", "del2 rep", "ref angle", "ref temp","del3 optemp"]
@@ -29,12 +33,8 @@ class Comparator:
 
             meas_ang = []
             for n in range(self.dfs[i].shape[0]):
-                if self.dfs[i]["Z"][n] < 0:
-                    meas_ang.append(abs(self.dfs[i]["Z"][n]/math.sqrt(self.dfs[i]["X"][n] ** 2 + self.dfs[i]["Y"][n] ** 2) / 
-                        math.pi * 180))
-                elif self.dfs[i]["Z"][n] >= 0:
-                    meas_ang.append(abs(self.dfs[i]["Z"][n]/math.sqrt(self.dfs[i]["X"][n] ** 2 + self.dfs[i]["Y"][n] ** 2) / 
-                        math.pi * 180)*-1)
+                meas_ang.append(math.atan(self.dfs[i]["Z"][n]/math.sqrt(self.dfs[i]["X"][n] ** 2 + self.dfs[i]["Y"][n] ** 2)) / 
+                    math.pi * 180)
             
             self.dfs[i]["meas angle"] = meas_ang
             self.dfs[i]["meas angle"] = self.dfs[i]["meas angle"]-self.offsets[i]
@@ -51,6 +51,8 @@ class Comparator:
             
             self.dfs[i]['meas temp']= self.dfs[i]["meas temp"]/10. 
 
+            self.dfs[i]['ref angle'] = self.dfs[i]['ref angle']*-1
+
             # Reorder columns
             cols = self.dfs[i].columns.tolist()
             cols = cols[:4] + [cols[5]] + [cols[7]] + [cols[6]] + [cols[4]]
@@ -59,6 +61,7 @@ class Comparator:
 
     def loadData(self):
         """
+        DEPRECATED
         Loads the Smartbrick data of the three Smartbricks into three separate dataframes (attributes of class).
         Dataframes are automatically scrubbed and only contain timestamp, measured angle and temperature and ref angle and temperature.
         """ 
@@ -235,7 +238,7 @@ class Comparator:
 
         for i in range(len(self.names)):
             ax.scatter(self.dfs[i]['meas temp'], self.dfs[i]['meas angle'], 
-                self.dfs[i]['meas angle']-self.dfs[i]['ref angle'], color=self.colours[i], label="SB"+str(i+1))
+                self.dfs[i]['ref angle']-self.dfs[i]['meas angle'], color=self.colours[i], label="SB"+str(i+1))
 
         ax.grid()
         ax.legend()
@@ -609,12 +612,11 @@ class Comparator:
 if __name__ == "__main__":
     names = ['SB1', 'SB2', 'SB3']
     comparator = Comparator(names=names)
-    comparator.loadDatav2()
     #comparator.plotTempData()
     #comparator.plotArefAdiff()
     #comparator.plotTmeasAdiff()
     #comparator.plotAmeasAdiff()
-    #comparator.plotTmeasAmeasAdiff()
+    comparator.plotTmeasAmeasAdiff()
     #comparator.plotTmeasAmeasAref()
     #comparator.plotTmeasAmeasAfactor1()
 

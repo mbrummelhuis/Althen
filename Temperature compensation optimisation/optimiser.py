@@ -56,10 +56,10 @@ class Optimiser(Comparator):
 
             # Generate and print pseudodata
             pseudo_meas_angle = [random.uniform(-10., 10.) for i in range(n_pseudo)]
-            print("Pseudo measured angle data: ", pseudo_meas_angle)
+            #print("Pseudo measured angle data: ", pseudo_meas_angle)
 
             pseudo_meas_temp = [random.uniform(-20., 50.) for i in range(n_pseudo)]
-            print("Pseudo measured temp data: ", pseudo_meas_temp)
+            #print("Pseudo measured temp data: ", pseudo_meas_temp)
 
             pseudo_real_angle = []
             for n in range(n_pseudo):
@@ -70,7 +70,7 @@ class Optimiser(Comparator):
                     self.models[i].coef_[4]*pseudo_meas_angle[n]*pseudo_meas_temp[n] + 
                     self.models[i].coef_[5]*pseudo_meas_temp[n]*pseudo_meas_temp[n])
             
-            print("Pseudo real angle data: ", pseudo_real_angle)
+            #print("Pseudo real angle data: ", pseudo_real_angle)
 
             # Plot
             fig = plt.figure()
