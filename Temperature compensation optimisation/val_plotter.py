@@ -96,10 +96,11 @@ class ValidationPlotter():
 
 if __name__ == "__main__":
     names = ['SB1', 'SB2', 'SB3']
-    run = 1
+    run = 2
     plotter = ValidationPlotter(names=names, run=run)    
     plotter.loadData()
-    #plotter.plotTimeTemp()
-    #plotter.plotTempDiff()
+    plotter.plotTimeTemp()
+    plotter.plotTempDiff()
     plotter.validateData()
-    plotter.beforeAfter(2)
+    for i in range(len(names)):
+        plotter.beforeAfter(i)
