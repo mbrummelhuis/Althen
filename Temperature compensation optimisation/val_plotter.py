@@ -68,7 +68,13 @@ class ValidationPlotter():
     
     def validateData(self):
         for i in range(len(self.names)):
-            self.dfs[i]['recalculated angle'] = self.dfs[i]['meas_angle']+ self.coefs[0]+self.coefs[1]*self.dfs[i]["meas_angle"]+self.coefs[2]*self.dfs[i]['temp']+self.coefs[3]*self.dfs[i]["meas_angle"]**2 +self.coefs[4]*self.dfs[i]["meas_angle"]*self.dfs[i]["temp"] +self.coefs[5]*self.dfs[i]["temp"]**2
+            self.dfs[i]['recalculated angle'] = (self.dfs[i]['meas_angle'] + 
+                                        self.coefs[0] + 
+                                        self.coefs[1]*self.dfs[i]["meas_angle"] + 
+                                        self.coefs[2]*self.dfs[i]['temp'] + 
+                                        self.coefs[3]*self.dfs[i]["meas_angle"]**2 +
+                                        self.coefs[4]*self.dfs[i]["meas_angle"]*self.dfs[i]["temp"] +
+                                        self.coefs[5]*self.dfs[i]["temp"]**2)
             plt.scatter(self.dfs[i]['temp'], self.dfs[i]['ref_angle']-self.dfs[i]['recalculated angle'], 
             color=self.colours[i], label=self.names[i])
         
@@ -96,11 +102,11 @@ class ValidationPlotter():
 
 if __name__ == "__main__":
     names = ['SB1', 'SB2', 'SB3']
-    run = 2
+    run = 1
     plotter = ValidationPlotter(names=names, run=run)    
     plotter.loadData()
-    plotter.plotTimeTemp()
-    plotter.plotTempDiff()
+    #plotter.plotTimeTemp()
+    #plotter.plotTempDiff()
     plotter.validateData()
     for i in range(len(names)):
         plotter.beforeAfter(i)
