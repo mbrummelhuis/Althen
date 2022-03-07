@@ -7,43 +7,35 @@ from sklearn import linear_model
 import numpy as np
 
 class interayAnalyser:
-    def __init__(self, sb_numbers, degree=2):
+    def __init__(self, sb_numbers, degree=2, val_run=None):
         self.sb_numbers = sb_numbers
         self.colours = ['b', 'r', 'g']
         self.offsets = [1.81427, 1.48468]
         self.poly_degree = degree
+        self.val_run = val_run
 
         self.test_filenames = []
-        self.test2_filenames = []
         self.val_filenames = []
-        self.val2_filenames = []
 
         self.test_paths = []
-        self.test2_paths = []
         self.val_paths = []
-        self.val2_paths = []
 
         self.dfs = []
         self.val_dfs = []
-        self.val2_dfs = []
 
         for index in range(len(self.sb_numbers)):
             self.test_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_alldata_cleaned_balanced_offset.xlsx')
             self.test_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
                 str(self.sb_numbers[index]), self.test_filenames[index]))
-
-            self.test2_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_alldata_cleaned_balanced_offset_2.xlsx')
-            self.test2_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
-                str(self.sb_numbers[index]), self.test2_filenames[index]))
             
-            
-            self.val_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_val.xlsx')
-            self.val_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
-                str(self.sb_numbers[index]), self.val_filenames[index]))
+            if self.val_run != None:
+                try:
+                    self.val_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_val_'+ str(self.val_run) +'_cleaned.xlsx')
+                    self.val_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'), 
+                        str(self.sb_numbers[index]), self.val_filenames[index]))
 
-            self.val2_filenames.append('SB_' + str(self.sb_numbers[index]) + '_Interay_2_1_cleaned.xlsx')
-            self.val2_paths.append(os.path.join(os.path.abspath(__file__).removesuffix('interayAnalyser.py'),
-                str(self.sb_numbers[index]), self.val2_filenames[index]))
+                except:
+                    print("Check run number")
         
         #self.coefs = [-0.0546958, 0.00354598, 0.0017394, 0.00062712, 0.00017706, -0.00013704] # From the -10 until 10 deg test data set
         self.coefs = [-0.05640178,  0.00878204,  0.0019763,  -0.00071323, -0.00046801, -0.00013376] # From the -2 until 2 test data set
@@ -51,31 +43,6 @@ class interayAnalyser:
     def loadTestData(self):
         for i in range(len(self.sb_numbers)):
             self.dfs.append(pd.read_excel(self.test_paths[i]))
-
-            # Rename columns to shorter, more sensible names including units where known
-            self.dfs[i] = self.dfs[i].rename({'SmartBrick ('+str(self.sb_numbers[i])+') Battery': 'Battery (V)', 
-                'SmartBrick ('+str(self.sb_numbers[i])+') Cause': 'Trigger',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Humidity': 'Humidity (%)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Signal Strength':'Signal (dB)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Temperature':'Temp (C)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') X':'X',
-                'SmartBrick ('+str(self.sb_numbers[i])+') X ADC':'X ADC',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Y':'Y (off)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Y ADC':'Y ADC', 
-                'Reference angle':'ref angle',
-                'Angle setting':'Angle setting',
-                'Temperature setting':'Temp setting',
-                'Y w/o offset':'Y'}, axis=1)
-            self.dfs[i]['Time'] = pd.to_datetime(self.dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
-            self.dfs[i]['Y'] = -1*self.dfs[i]['Y']
-        return
-    
-    def loadTestData2(self):
-        """
-        Loads test data from second compensation determination dataset. Use this function and loadTestData() exclusively, not at the same time!
-        """
-        for i in range(len(self.sb_numbers)):
-            self.dfs.append(pd.read_excel(self.test2_paths[i]))
 
             # Rename columns to shorter, more sensible names including units where known
             self.dfs[i] = self.dfs[i].rename({'SmartBrick ('+str(self.sb_numbers[i])+') Battery': 'Battery (V)', 
@@ -111,22 +78,6 @@ class interayAnalyser:
                 'Y w/o offset':'Y',
                 'ref angle':'ref'}, axis=1)
             self.val_dfs[i]['Time'] = pd.to_datetime(self.val_dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
-
-            self.val2_dfs.append(pd.read_excel(self.val2_paths[i]))
-            # Rename columns to shorter, more sensible names including units where known
-            self.val2_dfs[i] = self.val2_dfs[i].rename({'SmartBrick ('+str(self.sb_numbers[i])+') Battery': 'Battery (V)', 
-                'SmartBrick ('+str(self.sb_numbers[i])+') Cause': 'Trigger',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Humidity': 'Humidity (%)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Signal Strength':'Signal (dB)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Temperature':'Temp (C)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') X':'X',
-                'SmartBrick ('+str(self.sb_numbers[i])+') X ADC':'X ADC',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Y':'Y (off)',
-                'SmartBrick ('+str(self.sb_numbers[i])+') Y ADC':'Y ADC',
-                'Y w/o offset':'Y',
-                'ref angle':'ref'}, axis=1)
-            self.val2_dfs[i]['Time'] = pd.to_datetime(self.val2_dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
-
         return
     
     def polyFitSingle(self):
@@ -308,12 +259,10 @@ class interayAnalyser:
 
 if __name__ == '__main__':
     SB_numbers = [141421, 141442]
-    analyser = interayAnalyser(sb_numbers=SB_numbers)
-    analyser.loadTestData2()
+    val_run = 3
+    analyser = interayAnalyser(sb_numbers=SB_numbers, val_run=val_run)
     analyser.polyFitDouble()
     analyser.plotModelDouble()
 
     analyser.loadValData()
-    analyser.beforeAfter2(0)
-    analyser.beforeAfter2(1)
 
