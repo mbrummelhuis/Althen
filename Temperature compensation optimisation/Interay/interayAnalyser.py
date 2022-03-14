@@ -38,7 +38,7 @@ class interayAnalyser:
                     print("Check run number")
         
         #self.coefs = [-0.0546958, 0.00354598, 0.0017394, 0.00062712, 0.00017706, -0.00013704] # From the -10 until 10 deg test data set
-        self.coefs = [-0.05640178,  0.00878204,  0.0019763,  -0.00071323, -0.00046801, -0.00013376] # From the -2 until 2 test data set
+        #self.coefs = [-0.05640178,  0.00878204,  0.0019763,  -0.00071323, -0.00046801, -0.00013376] # From the -2 until 2 test data set
 
     def loadTestData(self):
         for i in range(len(self.sb_numbers)):
@@ -60,6 +60,7 @@ class interayAnalyser:
                 'Y w/o offset':'Y'}, axis=1)
             self.dfs[i]['Time'] = pd.to_datetime(self.dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
             self.dfs[i]['Y'] = -1*self.dfs[i]['Y']
+            
         return
     
     def loadValData(self):
@@ -78,6 +79,7 @@ class interayAnalyser:
                 'Y w/o offset':'Y',
                 'ref angle':'ref'}, axis=1)
             self.val_dfs[i]['Time'] = pd.to_datetime(self.val_dfs[i]["Time"], format = "%Y-%m-%d %H:%M:%S")
+            print(self.val_dfs[i])
         return
     
     def polyFitSingle(self):
@@ -207,28 +209,15 @@ class interayAnalyser:
         plt.show()
 
     def beforeAfter(self,i):
+        """
+        Creates a scatterplot for the indicated smartbrick with the originally measured Y data and the compensated Y data 
+        """
         print(self.sb_numbers[i])
         self.val_dfs[i]['comp angle'] = self.val_dfs[i]['Y']+ self.coefs[0]+self.coefs[1]*self.val_dfs[i]["Y"]+self.coefs[2]*self.val_dfs[i]['Temp (C)']+self.coefs[3]*self.val_dfs[i]["Y"]**2 +self.coefs[4]*self.val_dfs[i]["Y"]*self.val_dfs[i]["Temp (C)"] +self.coefs[5]*self.val_dfs[i]["Temp (C)"]**2
         
         
         plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['comp angle'],label='After comp')       
         plt.scatter(self.val_dfs[i]['Temp (C)'], self.val_dfs[i]['ref'] - self.val_dfs[i]['Y'],label='Before comp')   
-
-        plt.grid()
-        plt.legend()
-        plt.title("Difference between ref angle and compensated/measured angle")
-        plt.xlabel('Measured Temperature')
-        plt.ylabel('Difference')
-        plt.show()
-        pass
-
-    def beforeAfter2(self,i):
-        print(self.sb_numbers[i])
-        self.val2_dfs[i]['comp angle'] = self.val2_dfs[i]['Y']+ self.coefs[0]+self.coefs[1]*self.val2_dfs[i]["Y"]+self.coefs[2]*self.val2_dfs[i]['Temp (C)']+self.coefs[3]*self.val2_dfs[i]["Y"]**2 +self.coefs[4]*self.val2_dfs[i]["Y"]*self.val2_dfs[i]["Temp (C)"] +self.coefs[5]*self.val2_dfs[i]["Temp (C)"]**2
-        
-        
-        plt.scatter(self.val2_dfs[i]['Temp (C)'], self.val2_dfs[i]['ref'] - self.val2_dfs[i]['comp angle'],label='After comp')       
-        plt.scatter(self.val2_dfs[i]['Temp (C)'], self.val2_dfs[i]['ref'] - self.val2_dfs[i]['Y'],label='Before comp')   
 
         plt.grid()
         plt.legend()
@@ -260,9 +249,12 @@ class interayAnalyser:
 if __name__ == '__main__':
     SB_numbers = [141421, 141442]
     val_run = 3
-    analyser = interayAnalyser(sb_numbers=SB_numbers, val_run=val_run)
+    degree = 1
+    analyser = interayAnalyser(sb_numbers=SB_numbers, degree=degree, val_run=val_run)
+    analyser.loadTestData()
     analyser.polyFitDouble()
-    analyser.plotModelDouble()
 
     analyser.loadValData()
+    analyser.beforeAfter(0)
+    analyser.beforeAfter(1)
 
