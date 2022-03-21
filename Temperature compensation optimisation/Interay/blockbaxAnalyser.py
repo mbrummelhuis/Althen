@@ -8,7 +8,7 @@ class blockbaxAnalyser():
     def __init__(self, sb_numbers):
         self.sb_numbers = sb_numbers
         self.dfs = []
-        self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'cornlowerblue']
+        self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'cornlowerblue', 'lightcoral', 'chocolate', 'slateblue', 'orange', 'greenyellow']
         self.y_meas = []
         self.y_sigmas = []
 
@@ -40,23 +40,23 @@ class blockbaxAnalyser():
 
     
     def plotTempAngle(self):
-        for i in range(len(sb_numbers)):
-            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value'], color=self.colours[i], label=str(self.sb_numbers[i]))
+        for i in range(len(self.sb_numbers)):
+            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value'], label=str(self.sb_numbers[i]))
 
         if self.slope != None:
             x = np.linspace(0,25,1000)
             y = self.slope * x + self.intercept
             plt.plot(x,y)
         
-            plt.legend()
-            plt.title("Temperature vs Y value")
-            plt.xlabel('Measured Temperature')
-            plt.ylabel('Measured Angle Y')
-            plt.show()
+        plt.legend()
+        plt.title("Temperature vs Y value")
+        plt.xlabel('Measured Temperature')
+        plt.ylabel('Measured Angle Y')
+        plt.show()
 
     def plotTempHalfNormAngle(self):
-        for i in range(len(sb_numbers)):
-            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value (half norm)'], color=self.colours[i], label=str(self.sb_numbers[i]))
+        for i in range(len(self.sb_numbers)):
+            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value (half norm)'], label=str(self.sb_numbers[i]))
         
         if self.slope != None:
             x = np.linspace(0,20,1000)
@@ -70,8 +70,8 @@ class blockbaxAnalyser():
         plt.show()
 
     def plotTempNormAngle(self):
-        for i in range(len(sb_numbers)):
-            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value (norm)'], color=self.colours[i], label=str(self.sb_numbers[i]))
+        for i in range(len(self.sb_numbers)):
+            plt.scatter(self.dfs[i]['Temperature'], self.dfs[i]['Y value (norm)'], label=str(self.sb_numbers[i]))
         
         if self.slope != None:
             x = np.linspace(0,20,1000)
@@ -130,15 +130,24 @@ class blockbaxAnalyser():
         print("R-squared: %f" % r_value**2)
 
 if __name__=="__main__":
-    sb_numbers = [141419, 141422, 141425, 141427, 141430, 141431]
-    analyser = blockbaxAnalyser(sb_numbers)
-    analyser.loadData()
-    
-    analyser.trendline()
-    analyser.plotTempAngle()
+    #sb_numbers = [141419, 141422, 141425, 141427, 141430, 141431, 141433]
+    sbs = [148040, 148054, 148062, 148068, 148070, 148074, 148077, 148084, 148089, 148094, 148101, 148102]
 
-    analyser.trendlineNorm()
-    analyser.plotTempNormAngle()
+    for sb in sbs:    
+        analyser = blockbaxAnalyser([sb])
+        analyser.loadData()
+        print("-------------------"+str(sb))
+        print(analyser.y_meas)
+        print(analyser.y_sigmas)
 
-    analyser.trendlineHalfNorm()
-    analyser.plotTempHalfNormAngle()
+        #print("Not normalised --------------------------")
+        #analyser.trendline()
+        #analyser.plotTempAngle()
+
+        #print("Fully normalised --------------------------")
+        analyser.trendlineNorm()
+        analyser.plotTempNormAngle()
+
+        #print("Half normalised --------------------------")
+        #analyser.trendlineHalfNorm()
+        #analyser.plotTempHalfNormAngle()
