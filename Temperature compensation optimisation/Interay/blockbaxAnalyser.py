@@ -49,6 +49,8 @@ class blockbaxAnalyser():
             delete_after = pd.Timestamp(self.plot_till_date)
             data = data.loc[(data.index > delete_before)]
             data = data.loc[(data.index < delete_after)]
+            if data.empty:
+                raise RuntimeError("Dataframe is empty, check the plotting time interval.")
 
             # Calculate means and stdevs            
             self.y_means.append(data["Y value"].mean())
@@ -187,14 +189,15 @@ if __name__=="__main__":
     #sbs = [148040, 148054, 148062, 148068, 148070, 148074, 148077, 148084, 148089, 148094, 148101, 148102]
 
     plot_from_date = "2022-03-21 18:00:00" # put in date string with format YYYY-MM-DD HH:MM:SS
-    plot_till_date = "2022-03-24 01:30:00"
+    plot_till_date = "2022-04-14 01:30:00"
 
     # sbs = [148088, 148097, 148098, 148099, 148105, 148106, 148107] All from lab tests
-    sbs = [148088, 148097, 148098, 148099] # Good ones from lab tests
+    # sbs = [148088, 148097, 148098, 148099] # Good ones from lab tests
+    sbs = [148042, 148051, 148070, 148071, 148084]
 
     analyser = blockbaxAnalyser(sbs, plot_from_date, plot_till_date)
     analyser.loadData()
-    #analyser.plotTempNormAngle()
+    analyser.plotTempAngle()
 
     for sb in sbs:    
         analyser = blockbaxAnalyser([sb], plot_from_date, plot_till_date)
@@ -207,9 +210,9 @@ if __name__=="__main__":
         analyser.trendline()
         analyser.plotTempAngle()
 
-        print("Fully normalised --------------------------")
-        analyser.trendlineNorm()
-        analyser.plotTempNormAngle()
+        # print("Fully normalised --------------------------")
+        # analyser.trendlineNorm()
+        # analyser.plotTempNormAngle()
 
         #print("Half normalised --------------------------")
         #analyser.trendlineHalfNorm()
