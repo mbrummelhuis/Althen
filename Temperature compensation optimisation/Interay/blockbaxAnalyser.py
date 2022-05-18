@@ -159,6 +159,7 @@ class blockbaxAnalyser():
             p50_df = p50_df.loc[(p50_df.index<p50_end)]
 
             self.dfs[i]=pd.concat([m20_df, m10_df, p0_df, p10_df, p20_df, p30_df, p40_df, p50_df],axis=0)
+            #self.dfs[i] = pd.concat([m10_df, p0_df, p10_df, p20_df], axis=0)
 
     def matchRefData(self):
         for i in range(len(self.sb_numbers)):
@@ -177,6 +178,8 @@ class blockbaxAnalyser():
             # Delete rows if delta is larger or smaller than 1.0
             self.dfs[i] = self.dfs[i][self.dfs[i]["Delta ref"]< 1.0]
             self.dfs[i] = self.dfs[i][self.dfs[i]["Delta ref"]>-1.0]
+
+            self.dfs[i] = self.dfs[i].drop(columns=['Delta ref'])
 
     def plotTempAngle(self):
         """
@@ -298,8 +301,6 @@ class blockbaxAnalyser():
         self.cleanData()
         self.matchRefData()
 
-        
-    
     def polyFitAll(self):
         ylist = []
         templist = []
@@ -356,12 +357,8 @@ class blockbaxAnalyser():
             self.dfs[i]["Compensated Y"] = self.dfs[i]["Y value"] + self.model.coef_[0] + self.model.coef_[1]*self.dfs[i]["Y value"] + self.model.coef_[2]*self.dfs[i]["Temperature"]+ self.model.coef_[3]*self.dfs[i]["Y value"]**2+ self.model.coef_[4]*self.dfs[i]["Y value"]*self.dfs[i]["Temperature"]+ self.model.coef_[5]*self.dfs[i]["Temperature"]**2
             self.dfs[i]["Error"] = self.dfs[i]["Reference"] - self.dfs[i]["Compensated Y"]
             self.dfs[i]["Uncompensated error"] = self.dfs[i]["Reference"]-self.dfs[i]["Y value"]
-
-            print(str(self.sb_numbers[i])+" ------------------------------------")
-            print("Average uncompensated error: ", self.dfs[i]["Uncompensated error"].mean())
-            print("Average compensated error: ", self.dfs[i]["Error"].mean())
-            print("Absolute improvement: ", abs(self.dfs[i]["Uncompensated error"].mean())-abs(self.dfs[i]["Error"].mean()))
-            print("(Negative improvement means deterioration.)")
+        
+        self.errorStatistics()
     
     def plotErrorTemp(self,i):
 
@@ -397,6 +394,46 @@ class blockbaxAnalyser():
         plt.ylabel('Difference')
         plt.show()
 
+    def boxplotComparison(self):
+        p20_begin = pd.Timestamp("2022-05-01 21:40:00")
+        p20_end = pd.Timestamp("2022-05-02 15:40:00")
+        
+        self.comparison_df = pd.DataFrame()
+        names = []
+        for i in range(len(self.sb_numbers)):
+            
+            p20_df = self.dfs[i].loc[(self.dfs[i].index > p20_begin)]
+            p20_df = p20_df.loc[(p20_df.index<p20_end)]
+
+            p20_df = p20_df.loc[(abs(p20_df["Y value"]-5.0) < 1.0)]
+            if len(p20_df)>23:
+                p20_df.drop(p20_df.tail(1).index,inplace=True)
+            
+            self.comparison_df["Error "+str(self.sb_numbers[i])] = p20_df["Uncompensated error"].values
+            names.append("Error "+str(self.sb_numbers[i]))
+        
+        boxplot = self.comparison_df.boxplot(column=names)
+        plt.ylabel("Absolute uncompensated error in degrees")
+        plt.xlabel("Smartbrick")
+        plt.title("Uncompensated absolute error distribution at 20C and 5 deg")
+        plt.show()
+    
+    def errorStatistics(self):
+        for i in range(len(self.sb_numbers)):
+            print(str(self.sb_numbers[i]), "---------------------------------------")
+            print("Max absolute uncompensated error", self.dfs[i]["Uncompensated error"].max())
+            print("Average uncompensated error: ", self.dfs[i]["Uncompensated error"].mean())
+            print("Min absolute uncompensated error", self.dfs[i]["Uncompensated error"].min())
+            print("Max absolute compensated error: ", self.dfs[i]["Error"].max())
+            print("Average compensated error: ", self.dfs[i]["Error"].mean())
+            print("Min absolute compensated error: ", self.dfs[i]["Error"].min())
+            print("RMSE uncompensated: ", (self.dfs[i]["Uncompensated error"]**2).mean()**0.5)
+            print("RMSE compensated: ",  (self.dfs[i]["Error"]**2).mean()**0.5)
+
+            print("Absolute improvement: ", (self.dfs[i]["Uncompensated error"]**2).mean()**0.5-(self.dfs[i]["Error"]**2).mean()**0.5)
+            print("(Negative improvement means deterioration.)")
+            print(" ")
+        
 
 if __name__=="__main__":
     start_time = time.time()
@@ -423,17 +460,17 @@ if __name__=="__main__":
     print("Took: ", time.time()-start_time, "seconds")
 
     #analyser.plotTempAngle()
-
-    
+    print(analyser.dfs)
     analyser.polyFitAll()
-    analyser.plotModelAll()
+    #analyser.plotModelAll()
 
     analyser.validate()
+    analyser.boxplotComparison()
 
-    for i in range(len(analyser.sb_numbers)):
-        analyser.plotErrorTemp(i)
-        analyser.plotErrorAngle(i)
-        #analyser.beforeAfter(i)
+    i=1
+    analyser.plotErrorTemp(i)
+    analyser.plotErrorAngle(i)
+    analyser.beforeAfter(i)
 
 
 """
