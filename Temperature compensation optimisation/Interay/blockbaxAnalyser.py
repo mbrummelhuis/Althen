@@ -158,8 +158,8 @@ class blockbaxAnalyser():
             p50_df = self.dfs[i].loc[(self.dfs[i].index > p50_begin)]
             p50_df = p50_df.loc[(p50_df.index<p50_end)]
 
-            self.dfs[i]=pd.concat([m20_df, m10_df, p0_df, p10_df, p20_df, p30_df, p40_df, p50_df],axis=0)
-            #self.dfs[i] = pd.concat([m10_df, p0_df, p10_df, p20_df], axis=0)
+            #self.dfs[i]=pd.concat([m20_df, m10_df, p0_df, p10_df, p20_df, p30_df, p40_df, p50_df],axis=0)
+            self.dfs[i] = pd.concat([m10_df, p0_df, p10_df, p20_df], axis=0)
 
     def matchRefData(self):
         for i in range(len(self.sb_numbers)):
@@ -412,9 +412,21 @@ class blockbaxAnalyser():
             self.comparison_df["Error "+str(self.sb_numbers[i])] = p20_df["Uncompensated error"].values
             names.append("Error "+str(self.sb_numbers[i]))
         
+        #Reference data
+        ref_df = self.dfs[0].loc[(self.dfs[0].index > p20_begin)]
+        ref_df = ref_df.loc[(ref_df.index < p20_end)]
+        ref_df = ref_df.loc[(abs(ref_df["Reference"]-5.0) < 1.0)]
+        if len(ref_df) > 23:
+            ref_df.drop(ref_df.tail(len(ref_df)-23).index,inplace=True)
+        ref_df["Reference"] = ref_df["Reference"]-ref_df["Reference"].mean()
+        self.comparison_df["Reference"] = ref_df["Reference"].values
+        names.append("Reference")
+        print(self.comparison_df)
+        print(names)
+        
         boxplot = self.comparison_df.boxplot(column=names)
         plt.ylabel("Absolute uncompensated error in degrees")
-        plt.xlabel("Smartbrick")
+        plt.xlabel("Smartbrick S/N")
         plt.title("Uncompensated absolute error distribution at 20C and 5 deg")
         plt.show()
     
@@ -433,6 +445,36 @@ class blockbaxAnalyser():
             print("Absolute improvement: ", (self.dfs[i]["Uncompensated error"]**2).mean()**0.5-(self.dfs[i]["Error"]**2).mean()**0.5)
             print("(Negative improvement means deterioration.)")
             print(" ")
+    
+    def errorBoxplots(self):
+        self.uncomp_error_df = pd.DataFrame()
+        self.comp_error_df = pd.DataFrame()
+        names = []
+
+        for i in range(len(self.sb_numbers)):
+            temp_df = self.dfs[i]
+            
+            if len(temp_df) > 852:
+                temp_df.drop(temp_df.tail(len(temp_df)-852).index,inplace=True)
+            
+            self.uncomp_error_df[str(self.sb_numbers[i])] = temp_df["Uncompensated error"].values
+            self.comp_error_df[str(self.sb_numbers[i])] = temp_df["Error"].values
+
+            names.append(str(self.sb_numbers[i]))
+        
+        boxplot = self.uncomp_error_df.boxplot(column=names)
+        plt.ylabel("Uncompensated error (deg)")
+        plt.xlabel("Smartbrick S/N")
+        plt.title("Uncompensated error distribution (deg)")
+        plt.show()
+
+        boxplot = self.comp_error_df.boxplot(column=names)
+        plt.ylabel("Compensated error (deg)")
+        plt.xlabel("Smartbrick S/N")
+        plt.title("Compensated error distribution (deg)")
+        plt.show()
+        
+
         
 
 if __name__=="__main__":
@@ -460,17 +502,18 @@ if __name__=="__main__":
     print("Took: ", time.time()-start_time, "seconds")
 
     #analyser.plotTempAngle()
-    print(analyser.dfs)
     analyser.polyFitAll()
     #analyser.plotModelAll()
 
     analyser.validate()
+    #print(analyser.dfs)
     analyser.boxplotComparison()
+    analyser.errorBoxplots()
 
-    i=1
-    analyser.plotErrorTemp(i)
-    analyser.plotErrorAngle(i)
-    analyser.beforeAfter(i)
+    #i=1
+    #analyser.plotErrorTemp(i)
+    #analyser.plotErrorAngle(i)
+    #analyser.beforeAfter(i)
 
 
 """
