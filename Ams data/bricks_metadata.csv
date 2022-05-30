@@ -1,0 +1,103 @@
+name;SmartBrick Versie;Datum plaatsing;Aantal bricks op deze locatie;Batch;Clustercode;Locatie;huisnummer;hoog/laag geplaatst?;Handmatig Gemeten Scheefstand
+148048;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;16;;89.4 - 89.9
+148050;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;14;;89.4 - 89.9
+148059;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;22;;89.4 - 89.9
+148063;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;3;;88.2 - 90.0
+148065;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;22;;89.4 - 89.9
+148072;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;3;;88.2 - 90.0
+148074;Inter V1.0;2/15/2022;7;4;BDG0201;Bildijkkade;20;;89.4 - 89.9
+148055;Inter V1.0;2/14/2022;4;4;DCG0301;Da Costakade 118-122;120;;87.2 - 85.0
+148056;Inter V1.0;2/14/2022;4;4;DCG0301;Da Costakade 118-122;118;;87.2 - 85.0
+148066;Inter V1.0;2/14/2022;4;4;DCG0301;Da Costakade 118-122;114;;87.2 - 85.0
+148067;Inter V1.0;2/14/2022;4;4;DCG0301;Da Costakade 118-122;122;;87.2 - 85.0
+148053;Inter V1.0;2/14/2022;4;4;DCG0202;Da Costakade 91-93;91;;88.4 - 89.6
+148064;Inter V1.0;2/14/2022;4;4;DCG0202;Da Costakade 91-93;89;;88.4 - 89.6
+148071;Inter V1.0;2/14/2022;4;4;DCG0202;Da Costakade 91-93;93;;88.4 - 89.6
+147355;Inter V0.5;12-3-2021;3;3;BRU0148;Dommersbrug;;;
+147363;Inter V0.5;12-3-2021;3;3;BRU0148;Dommersbrug;;;
+147366;Inter V0.5;12-3-2021;3;3;BRU0148;Dommersbrug;;;
+147352;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;laag;
+147353;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;hoog;
+147362;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;laag;
+147364;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;hoog;
+147368;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;hoog;
+147370;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;laag;
+147371;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;laag;
+147380;Inter V0.5;12-3-2021;8;3;GDK0203;Geldersekade 105;;hoog;
+147360;Inter V0.5;12-2-2021;4;3;KBW0102;Kloveniersburgwal 31;;;
+147361;Inter V0.5;12-2-2021;4;3;KBW0102;Kloveniersburgwal 31;;;
+147365;Inter V0.5;12-2-2021;4;3;KBW0102;Kloveniersburgwal 31;;;
+147373;Inter V0.5;12-2-2021;4;3;KBW0102;Kloveniersburgwal 31;;;
+148045;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;38 boven links van scheur;hoog;88.5 - 89.9
+148049;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;36 hoog;hoog;88.5 - 89.9
+148054;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;38 boven rechts van scheur;hoog;88.5 - 89.9
+148057;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;36 heel laag;laag;88.5 - 89.9
+148062;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;40 boven;hoog;88.5 - 89.9
+148070;Inter V1.0;2/15/2022;6;4;KBS0301;Kromboomsloot 36;38 beneden;laag;88.5 - 89.9
+148077;Inter V1.0;2/22/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;69;;87.7 - 89.9
+148083;Inter V1.0;2/28/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;67;;87.7 - 89.9
+148090;Inter V1.0;2/28/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;67;;87.7 - 89.9
+148092;Inter V1.0;2/22/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;69;;87.7 - 89.9
+148101;Inter V1.0;2/28/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;21;;-
+148102;Inter V1.0;2/28/2022;5;4;NHG0201;Nieuwe Herengracht 65 - 69;21;;-
+148078;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;101;;89.1 - 89.8
+148079;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;93;;89.1 - 89.8
+148081;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;97;;89.1 - 89.8
+148082;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;105;;89.1 - 89.8
+148084;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;95;;89.1 - 89.8
+148089;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;93;;89.1 - 89.8
+148094;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;99;;89.1 - 89.8
+148095;Inter V1.0;2/22/2022;8;4;NHG0301;Nieuwe Herengracht 95 - 105;103;;89.1 - 89.8
+147356;Inter V0.5;12-3-2021;4;3;BRU0146;Oranjebrug;;;
+147357;Inter V0.5;12-3-2021;4;3;BRU0146;Oranjebrug;;;
+147377;Inter V0.5;12-3-2021;4;3;BRU0146;Oranjebrug;;;
+147378;Inter V0.5;12-3-2021;4;3;BRU0146;Oranjebrug;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+;Althen V0.5;10-11-2021;19;1;Overamstel;Overamstel;;;
+141431;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie A;;;
+141433;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie A;;;
+141427;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie B;;;
+141429;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie B;;;
+148091;Inter V1.0;2/22/2022;19;4;Overamstel;Overamstel sectie B;;;
+141424;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie C;;;
+141425;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie C;;;
+148087;Inter V1.0;2/22/2022;19;4;Overamstel;Overamstel sectie C;;;
+141419;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie D;;;
+141422;Inter V0.5;10-11-2021;19;1;Overamstel;Overamstel sectie D;;;
+148076;Inter V1.0;2/22/2022;19;4;Overamstel;Overamstel sectie D;;;
+141432;Inter V0.5;11-4-2021;4;2;PRG0701;Prinsengracht 336;;;
+141435;Inter V0.5;11-4-2021;4;2;PRG0701;Prinsengracht 336;;;
+141437;Inter V0.5;11-4-2021;4;2;PRG0701;Prinsengracht 336;;;
+141439;Inter V0.5;11-4-2021;4;2;PRG0701;Prinsengracht 336;;;
+147354;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147369;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147372;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147374;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147375;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147381;Inter V0.5;12-2-2021;6;3;PRG1002;Prinsengracht 855;;;
+147376;Inter V0.5;12-3-2021;2;3;SIN0401;Singel 112;;;
+147379;Inter V0.5;12-3-2021;2;3;SIN0401;Singel 112;;;
+148042;Inter V1.0;2/14/2022;4;4;SIN0701;Singel 300;;;88.2 - 89.5
+148043;Inter V1.0;2/14/2022;4;4;SIN0701;Singel 300;;;88.2 - 89.5
+148046;Inter V1.0;2/14/2022;4;4;SIN0701;Singel 300;;;88.2 - 89.5
+148058;Inter V1.0;2/14/2022;4;4;SIN0701;Singel 300;;;88.2 - 89.5
+148051;Inter V1.0;2/14/2022;3;4;;Singel 347;;;88.4 - 89.5
+148060;Inter V1.0;2/14/2022;3;4;;Singel 347;;;88.4 - 89.5
+148069;Inter V1.0;2/14/2022;3;4;;Singel 347;;;88.4 - 89.5
+148037;Inter V1.0;2/14/2022;4;4;;Singel 354;;;89.9-87.0
+148040;Inter V1.0;2/14/2022;4;4;;Singel 354;;;89.9-87.0
+148068;Inter V1.0;2/14/2022;4;4;;Singel 354;;;89.9-87.0
+148073;Inter V1.0;2/14/2022;4;4;;Singel 354;;;89.9-87.0
+141428;Inter V0.5;11-4-2021;4;2;SIN0903;Singel 426;;laag;
+141434;Inter V0.5;11-4-2021;4;2;SIN0903;Singel 426;;hoog;
+141436;Inter V0.5;1-7-2022;4;2;SIN0903;Singel 426;;hoog;
+141438;Inter V0.5;11-4-2021;4;2;SIN0903;Singel 426;;laag;
+141441;Inter V0.5;11-4-2021;4;2;SIN0903;Singel 426;;hoog;
+147358;Inter V0.5;12-3-2021;2;3;WEG0201;Waalseilandsgracht 39;;;
+147359;Inter V0.5;12-3-2021;2;3;WEG0201;Waalseilandsgracht 39;;;
