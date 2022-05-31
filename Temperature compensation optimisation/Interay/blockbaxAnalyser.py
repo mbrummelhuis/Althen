@@ -8,13 +8,15 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 
 class blockbaxAnalyser():
-    def __init__(self, sb_numbers, plot_from_date, plot_till_date):
+    def __init__(self, sb_numbers, plot_from_date, plot_till_date,ref=False):
         self.sb_numbers = sb_numbers
         self.dfs = []
         self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'cornlowerblue', 'lightcoral', 'chocolate', 'slateblue', 'orange', 'greenyellow']
         self.y_means = []
         self.y_sigmas = []
         self.poly_degree = 2
+
+        self.ref=ref
 
         self.plot_from_date = plot_from_date
         self.plot_till_date = plot_till_date
@@ -26,13 +28,18 @@ class blockbaxAnalyser():
         self.tl_min = -20
         self.tl_max =  50
 
-    def loadData(self, ext=False):
+    def loadData(self, ext=False,cut=True,ref=False):
         for i in range(len(self.sb_numbers)):
             temp_path = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'), 
                 str(self.sb_numbers[i]), str(self.sb_numbers[i]) + '_blockbax_temp.csv')
             y_path = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'), 
                 str(self.sb_numbers[i]), str(self.sb_numbers[i]) + '_blockbax_y.csv')
-            
+            if self.ref:
+                temp_path = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'), 
+                str(self.sb_numbers[i]), str(self.sb_numbers[i]) + '_blockbax_temp_ref.csv')
+                y_path = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'), 
+                str(self.sb_numbers[i]), str(self.sb_numbers[i]) + '_blockbax_y_ref.csv')
+
             names = ['Series', 'Date', 'Value']
             temp_df = pd.read_csv(temp_path, delimiter=',"', header=1, engine='python', names=names).replace('"','', regex=True)
             temp_df['Date'] = pd.to_datetime(temp_df["Date"], format = "%Y-%m-%d %H:%M:%S")
@@ -49,12 +56,13 @@ class blockbaxAnalyser():
             data["Datetime"] = pd.to_datetime(data["Datetime"], format = "%Y-%m-%d %H:%M:%S")
             data.sort_index(axis=0, ascending=False)
             data = data.set_index("Datetime", drop=False)
-            delete_before = pd.Timestamp(self.plot_from_date) # Year, month, date
-            delete_after = pd.Timestamp(self.plot_till_date)
-            data = data.loc[(data.index > delete_before)]
-            data = data.loc[(data.index < delete_after)]
-            if data.empty:
-                raise RuntimeError("Dataframe is empty, check the plotting time interval.")
+            if cut:
+                delete_before = pd.Timestamp(self.plot_from_date) # Year, month, date
+                delete_after = pd.Timestamp(self.plot_till_date)
+                data = data.loc[(data.index > delete_before)]
+                data = data.loc[(data.index < delete_after)]
+                if data.empty:
+                    raise RuntimeError("Dataframe is empty, check the plotting time interval.")
 
             # Calculate means and stdevs            
             self.y_means.append(data["Y value"].mean())
@@ -84,8 +92,6 @@ class blockbaxAnalyser():
         self.refdf = self.refdf.loc[(self.refdf.index < delete_after)]
 
         # Parse data to fit into a method similar to polyfitdouble
-    
-    # TO DO: Create polyfitdouble function for all smartbricks to determine temp comp
     
     def determineOffsets(self,zero_date_start, zero_date_end):
         delete_before = pd.Timestamp(zero_date_start)
@@ -351,10 +357,12 @@ class blockbaxAnalyser():
         ax.legend()
         plt.show()
     
-    def validate(self):
+    def validate(self, model=None):
+        if model == None:
+            model=self.model
         for i in range(len(self.sb_numbers)):
 
-            self.dfs[i]["Compensated Y"] = self.dfs[i]["Y value"] + self.model.coef_[0] + self.model.coef_[1]*self.dfs[i]["Y value"] + self.model.coef_[2]*self.dfs[i]["Temperature"]+ self.model.coef_[3]*self.dfs[i]["Y value"]**2+ self.model.coef_[4]*self.dfs[i]["Y value"]*self.dfs[i]["Temperature"]+ self.model.coef_[5]*self.dfs[i]["Temperature"]**2
+            self.dfs[i]["Compensated Y"] = self.dfs[i]["Y value"] + model.coef_[0] + model.coef_[1]*self.dfs[i]["Y value"] + model.coef_[2]*self.dfs[i]["Temperature"]+ model.coef_[3]*self.dfs[i]["Y value"]**2+ model.coef_[4]*self.dfs[i]["Y value"]*self.dfs[i]["Temperature"]+ model.coef_[5]*self.dfs[i]["Temperature"]**2
             self.dfs[i]["Error"] = self.dfs[i]["Reference"] - self.dfs[i]["Compensated Y"]
             self.dfs[i]["Uncompensated error"] = self.dfs[i]["Reference"]-self.dfs[i]["Y value"]
         
@@ -473,9 +481,8 @@ class blockbaxAnalyser():
         plt.xlabel("Smartbrick S/N")
         plt.title("Compensated error distribution (deg)")
         plt.show()
-        
 
-        
+    
 
 if __name__=="__main__":
     start_time = time.time()
@@ -489,45 +496,26 @@ if __name__=="__main__":
     offset_date_end = "2022-05-02 05:35:00"
 
     # sbs = [148088, 148097, 148098, 148099, 148105, 148106, 148107] All from lab tests
-    # sbs = [148088, 148097, 148098, 148099] # Good ones from lab tests
+    sbs_val = [148088, 148097, 148098, 148099] # Good ones from lab tests
     # sbs = [148042, 148051, 148070, 148071, 148084]
     # sbs = [148107, 148098, 148097, 148091, 148088, 148105, 148076, 148096] # Second lab test
     sbs = [148098, 148097, 148091, 148088, 148076, 148096] # Second lab test without bad data smartbricks
 
-    ref_filename = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'),"Ref","jewell_ref_1.txt")
+    ref_filename = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'),"Ref","jewell_ref_april.txt")
+    ref_val_filename = os.path.join(os.path.abspath(__file__).removesuffix('blockbaxAnalyser.py'),"Ref","jewell_ref_march.txt")
 
     analyser = blockbaxAnalyser(sbs, plot_from_date, plot_till_date)
+    val_analyser = blockbaxAnalyser(sbs_val, plot_from_date, plot_till_date,ref=True)
+
     analyser.dataPrep(ref_filename, offset_date_start,offset_date_end)
+    val_analyser.dataPrep(ref_val_filename,offset_date_end= , offset_date_start=) # Find out begin and end of 20c and 0 deg
+    print(analyser.dfs)
+    print(val_analyser.dfs)
+
+    analyser.polyFitAll() # Make model of test data set
+    val_analyser.validate(model=analyser.model)
 
     print("Took: ", time.time()-start_time, "seconds")
 
-    #analyser.plotTempAngle()
-    analyser.polyFitAll()
-    #analyser.plotModelAll()
-
-    analyser.validate()
-    #print(analyser.dfs)
-    analyser.boxplotComparison()
-    analyser.errorBoxplots()
-
-    #i=1
-    #analyser.plotErrorTemp(i)
-    #analyser.plotErrorAngle(i)
-    #analyser.beforeAfter(i)
-
-
-"""
-    for sb in sbs:    
-        analyser = blockbaxAnalyser([sb], plot_from_date, plot_till_date)
-        analyser.dataPrep(ref_filename, offset_date_start,offset_date_end)
-
-        analyser.trendline()
-        analyser.plotTempAngle()
-
-        # print("Fully normalised --------------------------")
-        # analyser.trendlineNorm()
-        # analyser.plotTempNormAngle()
-
-        #print("Half normalised --------------------------")
-        #analyser.trendlineHalfNorm()
-        #analyser.plotTempHalfNormAngle()"""
+    # val_analyser.boxplotComparison()
+    # val_analyser.errorBoxplots()

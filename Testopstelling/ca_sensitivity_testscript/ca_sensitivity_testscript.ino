@@ -12,11 +12,11 @@
 #define FLT 3
 
 // Deg-steps mapping (from Excel trendline)
-#define slope_roll 3678.8
-#define intercept_roll 35028
+#define slope_roll 3570.1
+#define intercept_roll 39061
 
-#define slope_pitch 1686.1
-#define intercept_pitch 59062
+#define slope_pitch 1606.7
+#define intercept_pitch 59340
 
 // Global variables
 volatile bool FLTflag = false;
@@ -148,6 +148,9 @@ void moveRollDegrees(float deg) {
   Serial.print(deg);
   Serial.println(" degrees");
   long int roll_step_goal = slope_roll * deg + intercept_roll;
+  if(roll_step_goal < 0) {Serial.println("Commanded inclination out of range ");
+    return;}
+  
   long int roll_steps_to_go = roll_step_goal - steps_roll;
   Serial.print("Roll steps to go: ");
   Serial.println(roll_steps_to_go);
@@ -163,6 +166,7 @@ void moveRollDegrees(float deg) {
     --roll_steps_to_go;
   }
   Serial.println("Finished moving roll");
+  return;
 }
 
 void movePitchDegrees(float deg) {
@@ -189,6 +193,7 @@ void movePitchDegrees(float deg) {
     --pitch_steps_to_go;
   }
   Serial.println("Finished moving pitch");
+  return;
 }
 
 void homeMotors() {
