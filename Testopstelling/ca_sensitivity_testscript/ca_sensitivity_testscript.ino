@@ -28,6 +28,8 @@ const unsigned long SECOND = 1000;
 const unsigned long MINUTE = 60*SECOND;
 const unsigned long HOUR = 60*MINUTE;
 
+const unsigned long INTERVAL = 4*HOUR;
+
 long steps_roll;
 long steps_pitch;
 
@@ -76,71 +78,61 @@ void setup() {
 
   homeMotors();
 
+  delay(60*SECOND);
+
   // Move to 0 position
-  Serial.println("Moving to 0 position");
+
   moveRollDegrees(0.0);
   movePitchDegrees(0.0);
+  delay(INTERVAL);
 
-  delay(5*SECOND);
+  movePitchDegrees(-10.0);
+  cycleRoll();
 
-  Serial.println("Starting test loop...");
-}
+  movePitchDegrees(-5.0);
+  cycleRoll();
 
-void loop() {
-  cyclePitch();
+  movePitchDegrees(-2.0);
+  cycleRoll();
+
+  movePitchDegrees(0.0);
+  cycleRoll();
+
+  movePitchDegrees(2.0);
+  cycleRoll();
+
+  movePitchDegrees(5.0);
+  cycleRoll();
+
+  movePitchDegrees(10.0);
   cycleRoll();
 }
 
-void cyclePitch() {
-  movePitchDegrees(-10.0);
-  delay(SECOND);
-
-  movePitchDegrees(-5.0);
-  delay(SECOND);
-
-  movePitchDegrees(-2.0);
-  delay(SECOND);
-
-  movePitchDegrees(0.0);
-  delay(SECOND);
-
-  movePitchDegrees(2.0);
-  delay(SECOND);
-
-  movePitchDegrees(5.0);
-  delay(SECOND);
-
-  movePitchDegrees(10.0);
-  delay(SECOND);
-
-  movePitchDegrees(0.0);
-  delay(SECOND);
+void loop() {
+  digitalWrite(LedPin, HIGH);
+  delay(100);
+  digitalWrite(LedPin, LOW);
+  delay(100);
 }
 
 void cycleRoll() {
-  moveRollDegrees(-8.0);
-  delay(SECOND);
-
+  moveRollDegrees(0.0);
+  delay(INTERVAL);
+    
   moveRollDegrees(-5.0);
-  delay(SECOND);
+  delay(INTERVAL);
 
   moveRollDegrees(-2.0);
-  delay(SECOND);
+  delay(INTERVAL);
 
   moveRollDegrees(0.0);
-  delay(SECOND);
+  delay(INTERVAL);
 
   moveRollDegrees(2.0);
-  delay(SECOND);
+  delay(INTERVAL);
 
   moveRollDegrees(5.0);
-  delay(SECOND);
-
-  moveRollDegrees(8.0);
-  delay(SECOND);
-
-  moveRollDegrees(0.0);
-  delay(SECOND);
+  delay(INTERVAL);
 }
 
 void moveRollDegrees(float deg) {

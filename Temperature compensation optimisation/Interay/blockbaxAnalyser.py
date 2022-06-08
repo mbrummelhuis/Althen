@@ -250,19 +250,16 @@ class blockbaxAnalyser():
         """
         Calculates the slope, intercept and r-squared for a trendline of a set.
         """
-        templist = []
-        ylist = []
-        # Append all temperature and y data in separate lists
         for i in range(len(self.sb_numbers)):
-            templist += self.dfs[i]['Temperature'].tolist()
-            ylist += self.dfs[i]['Y value'].tolist()
+            templist = self.dfs[i]['Temperature'].tolist()
+            ylist = self.dfs[i]['Y value'].tolist()
 
-        temparray = np.array(templist)
-        yarray = np.array(ylist)
+            temparray = np.array(templist)
+            yarray = np.array(ylist)
 
-        self.slope, self.intercept, r_value, p_value, std_err = linregress(temparray, yarray)
-        print("slope: %f, intercept: %f" % (self.slope, self.intercept))
-        print("R-squared: %f" % r_value**2)
+            self.slope, self.intercept, r_value, p_value, std_err = linregress(temparray, yarray)
+            print("slope: %f, intercept: %f" % (self.slope, self.intercept))
+            print("R-squared: %f" % r_value**2)
 
     def trendlineHalfNorm(self):
         """
@@ -508,12 +505,12 @@ if __name__=="__main__":
     val_analyser = blockbaxAnalyser(sbs_val, plot_from_date, plot_till_date,ref=True)
 
     analyser.dataPrep(ref_filename, offset_date_start,offset_date_end)
-    val_analyser.dataPrep(ref_val_filename,offset_date_end= , offset_date_start=) # Find out begin and end of 20c and 0 deg
+    #val_analyser.dataPrep(ref_val_filename,offset_date_end= , offset_date_start=) # Find out begin and end of 20c and 0 deg
     print(analyser.dfs)
-    print(val_analyser.dfs)
+    #print(val_analyser.dfs)
 
     analyser.polyFitAll() # Make model of test data set
-    val_analyser.validate(model=analyser.model)
+    #val_analyser.validate(model=analyser.model)
 
     print("Took: ", time.time()-start_time, "seconds")
 
