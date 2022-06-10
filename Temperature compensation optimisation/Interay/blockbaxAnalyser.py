@@ -164,8 +164,8 @@ class blockbaxAnalyser():
             p50_df = self.dfs[i].loc[(self.dfs[i].index > p50_begin)]
             p50_df = p50_df.loc[(p50_df.index<p50_end)]
 
-            #self.dfs[i]=pd.concat([m20_df, m10_df, p0_df, p10_df, p20_df, p30_df, p40_df, p50_df],axis=0)
-            self.dfs[i] = pd.concat([m10_df, p0_df, p10_df, p20_df], axis=0)
+            self.dfs[i]=pd.concat([m20_df, m10_df, p0_df, p10_df, p20_df, p30_df, p40_df, p50_df],axis=0)
+            #self.dfs[i] = pd.concat([m10_df, p0_df, p10_df, p20_df], axis=0)
 
     def matchRefData(self):
         for i in range(len(self.sb_numbers)):
@@ -297,6 +297,71 @@ class blockbaxAnalyser():
         print("slope: %f, intercept: %f" % (self.slope, self.intercept))
         print("R-squared: %f" % r_value**2)
     
+    def trendlineStdTF_per_y(self,i,y_index, y_value):
+        """
+        Calculates the slope, intercept and r-squared for a trendline of a set with angles normalised w.r.t. mean and stdev.
+        """
+        if self.slope == None:
+            self.slope = []
+        if self.intercept ==None:
+            self.intercept = []
+
+        temparray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Temp stdtf'].tolist())
+        yarray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Y stdtf'].tolist())
+
+        slope, intercept, r_value, p_value, std_err = linregress(temparray, yarray)
+
+        self.slope.append(slope)
+        self.intercept.append(intercept)
+
+        print("----------------------------------------------------------------------------------------------------")
+        print("Trendline on standard transformed data of SmartBrick ", self.sb_numbers[i], "at angle ", y_value)
+        print("slope: %f, intercept: %f" % (self.slope[y_index], self.intercept[y_index]))
+        print("R-squared: %f" % r_value**2)
+
+    def trendlineStdTF_per_y_notf_temp(self,i,y_index, y_value):
+        """
+        Calculates the slope, intercept and r-squared for a trendline of a set with angles normalised w.r.t. mean and stdev.
+        """
+        if self.slope == None:
+            self.slope = []
+        if self.intercept ==None:
+            self.intercept = []
+
+        temparray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Temperature'].tolist())
+        yarray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Y stdtf'].tolist())
+
+        slope, intercept, r_value, p_value, std_err = linregress(temparray, yarray)
+
+        self.slope.append(slope)
+        self.intercept.append(intercept)
+
+        print("----------------------------------------------------------------------------------------------------")
+        print("Trendline on standard transformed data of SmartBrick ", self.sb_numbers[i], "at angle ", y_value)
+        print("slope: %f, intercept: %f" % (self.slope[y_index], self.intercept[y_index]))
+        print("R-squared: %f" % r_value**2)
+
+    def trendlineStdTF(self,i):
+        """
+        Calculates the slope, intercept and r-squared for a trendline of a set with angles normalised w.r.t. mean and stdev.
+        """
+        if self.slope == None:
+            self.slope = []
+        if self.intercept ==None:
+            self.intercept = []
+
+        temparray = np.array(self.dfs[i]['Temp stdtf'].tolist())
+        yarray = np.array(self.dfs[i]['Y stdtf'].tolist())
+
+        slope, intercept, r_value, p_value, std_err = linregress(temparray, yarray)
+
+        self.slope.append(slope)
+        self.intercept.append(intercept)
+
+        print("Trendline on standard transformed data of SmartBrick: ", self.sb_numbers[i])
+        print("slope: %f, intercept: %f" % (self.slope[i], self.intercept[i]))
+        print("R-squared: %f" % r_value**2)
+
     def dataPrep(self, ref_filename, offset_date_start,offset_date_end):
         self.loadData()
         self.loadRefData(ref_filename)
