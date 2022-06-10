@@ -318,6 +318,28 @@ class blockbaxAnalyser():
         print("Trendline on standard transformed data of SmartBrick ", self.sb_numbers[i], "at angle ", y_value)
         print("slope: %f, intercept: %f" % (self.slope[y_index], self.intercept[y_index]))
         print("R-squared: %f" % r_value**2)
+    
+    def trendlineStdTF_per_y_error(self,i,y_index, y_value):
+        """
+        Calculates the slope, intercept and r-squared for a trendline of a set with angles normalised w.r.t. mean and stdev.
+        """
+        if self.slope == None:
+            self.slope = []
+        if self.intercept ==None:
+            self.intercept = []
+
+        temparray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Temp stdtf'].tolist())
+        yarray = np.array(self.dfs[i].groupby("Y setting").get_group(y_value)['Y stdtf error'].tolist())
+
+        slope, intercept, r_value, p_value, std_err = linregress(temparray, yarray)
+
+        self.slope.append(slope)
+        self.intercept.append(intercept)
+
+        print("----------------------------------------------------------------------------------------------------")
+        print("Trendline on standard transformed data of SmartBrick ", self.sb_numbers[i], "at angle ", y_value)
+        print("slope: %f, intercept: %f" % (self.slope[y_index], self.intercept[y_index]))
+        print("R-squared: %f" % r_value**2)
 
     def trendlineStdTF_per_y_notf_temp(self,i,y_index, y_value):
         """
