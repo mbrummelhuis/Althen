@@ -6,9 +6,10 @@ import numpy as np
 import time
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+from sklearn.model_selection import train_test_split, StratifiedKFold
 
 class blockbaxAnalyser():
-    def __init__(self, sb_numbers, plot_from_date, plot_till_date,ref=False):
+    def __init__(self, sb_numbers, plot_from_date, plot_till_date,ref=False, seed=1):
         self.sb_numbers = sb_numbers
         self.dfs = []
         self.colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'cornlowerblue', 'lightcoral', 'chocolate', 'slateblue', 'orange', 'greenyellow']
@@ -24,9 +25,19 @@ class blockbaxAnalyser():
         self.slope = None
         self.intercept = None
 
+        self.bins_y = None
+        self.y_steps = None
+        self.bins_temp = None
+        self.temp_steps = None
+
+        self.seed=seed
+
         # Trendline settings (min and max temperature)
         self.tl_min = -20
         self.tl_max =  50
+
+        self.train_ratio = 0.8 # Ratio of the data used for training (1-split_ratio is used for testing)
+        self.test_ratio = 1-self.train_ratio
 
     def loadData(self, ext=False,cut=True,ref=False):
         for i in range(len(self.sb_numbers)):
@@ -64,10 +75,9 @@ class blockbaxAnalyser():
                 if data.empty:
                     raise RuntimeError("Dataframe is empty, check the plotting time interval.")
 
-            # Calculate means and stdevs            
-            self.y_means.append(data["Y value"].mean())
-            self.y_sigmas.append(data["Y value"].std())
             if ext == True:
+                self.y_means.append(data["Y value"].mean())
+                self.y_sigmas.append(data["Y value"].std())
                 # Construct extended dataset
                 ext_data = [data["Datetime"], data["Temperature"], data["Y value"], (data["Y value"]-self.y_means[i]), (data["Y value"]-self.y_means[i])/self.y_sigmas[i]]
                 ext_headers = ['Datetime', 'Temperature', 'Y value', 'Y value (half norm)', 'Y value (norm)']
@@ -390,6 +400,256 @@ class blockbaxAnalyser():
         self.determineOffsets(offset_date_start,offset_date_end)
         self.cleanData()
         self.matchRefData()
+        self.standardScale()
+        self.splitData()
+    
+    def standardScale(self):
+        for i in range(len(self.sb_numbers)):
+            self.dfs[i]["Y setting"] = pd.cut(self.dfs[i]["Y value"], bins = self.bins_y, labels=self.y_steps)
+            self.dfs[i]["Temp setting"] = pd.cut(self.dfs[i]["Temperature"], bins = self.bins_temp, labels=self.temp_steps)
+
+        y_lists = []
+        yref_lists = []
+        for y in self.y_steps:
+            y_list = []
+            yref_list = []
+            for n in range(len(self.sb_numbers)):
+                y_list += self.dfs[n].groupby("Y setting").get_group(y)["Y value"].tolist()
+                yref_list += self.dfs[n].groupby("Y setting").get_group(y)["Reference"].tolist()
+            y_lists.append(y_list)
+            yref_lists.append(yref_list)
+        self.y_means = []
+        self.yref_means = []
+        self.y_stds = []
+        self.yref_stds = []
+        for y in y_lists:
+            self.y_means.append(sum(y)/len(y))
+            self.y_stds.append(np.std(y))
+        for yref in yref_lists:
+            self.yref_means.append(sum(yref)/len(yref))
+            self.yref_stds.append(np.std(yref))
+
+        temp_lists = []
+        for temp in self.temp_steps:
+            temp_list = []
+            for n in range(len(self.sb_numbers)):
+                    temp_list += self.dfs[n].groupby("Temp setting").get_group(temp)["Temperature"].tolist()
+            temp_lists.append(temp_list)
+        self.temp_means = []
+        self.temp_stds = []
+        for temp in temp_lists:
+            self.temp_means.append(sum(temp)/len(temp))
+            self.temp_stds.append(np.std(temp))
+
+        for n in range(len(self.sb_numbers)): # Per smartbrick
+            self.dfs[n]["Y mean"] = self.dfs[n].apply(lambda x: self.get_corresponding_ymeans(x["Y setting"]), axis=1)
+            self.dfs[n]["Y std"] = self.dfs[n].apply(lambda x: self.get_corresponding_ystds(x["Y setting"]), axis=1)
+
+            self.dfs[n]["Ref mean"] = self.dfs[n].apply(lambda x: self.get_corresponding_yrefmeans(x["Y setting"]), axis=1)
+            self.dfs[n]["Ref std"] = self.dfs[n].apply(lambda x: self.get_corresponding_yrefstds(x["Y setting"]), axis=1)
+
+            self.dfs[n]["Temp mean"] = self.dfs[n].apply(lambda x: self.get_corresponding_tempmeans(x["Temp setting"]), axis=1)
+            self.dfs[n]["Temp std"] = self.dfs[n].apply(lambda x: self.get_corresponding_tempstds(x["Temp setting"]), axis=1)
+
+            self.dfs[n]["Y stdtf"] = (self.dfs[n]["Y value"]-self.dfs[n]["Y mean"])/self.dfs[n]["Y std"]
+            self.dfs[n]["Yref stdtf"] = (self.dfs[n]["Reference"]-self.dfs[n]["Ref mean"])/self.dfs[n]["Ref std"]
+            self.dfs[n]["Temp stdtf"] = (self.dfs[n]["Temperature"]-self.dfs[n]["Temp mean"])/self.dfs[n]["Temp std"]
+
+    def splitData(self):
+        # Split self.dfs into self.test and self.trainv
+        self.train_inputs = []
+        self.test_inputs = []
+        self.train_labels = []
+        self.test_labels = []
+        for i in range(len(self.sb_numbers)):
+            self.train_inputs.append(pd.DataFrame())
+            self.test_inputs.append(pd.DataFrame())    
+            self.train_labels.append(pd.DataFrame())
+            self.test_labels.append(pd.DataFrame())
+
+            x = pd.concat([self.dfs[i]["Y value"], self.dfs[i]["Y stdtf"], self.dfs[i]["Temperature"], self.dfs[i]["Temp stdtf"]], keys=["Y value", "Y stdtf", "Temperature", "Temp stdtf"], axis=1)
+            y = pd.concat([self.dfs[i]["Reference"], self.dfs[i]["Yref stdtf"], self.dfs[i]["Y setting"], self.dfs[i]["Temp setting"]], keys=["Reference", "Yref stdtf", "Y setting", "Temp setting"], axis=1)
+            outputs = pd.concat([y["Reference"], y["Yref stdtf"]], keys=["Reference", "Yref stdtf"], axis=1)
+            stratify = pd.concat([y["Y setting"],y["Temp setting"]], keys=["Y setting", "Temp setting"],axis=1)
+            
+            self.train_inputs[i], self.test_inputs[i], self.train_labels[i], self.test_labels[i] =  train_test_split(x, 
+                outputs, 
+                stratify = stratify, 
+                random_state=self.seed,
+                test_size=self.test_ratio)
+    
+    def trainerror(self, stdtf=True):
+        self.stdtf = stdtf
+        if stdtf == False:
+            ylist = []
+            templist = []
+            reflist = []
+            print("Polynomial fit with regression to data of all Smartbricks, inputs and references NOT standard transformed")
+            print('Serial numbers: ', self.sb_numbers)    
+
+            for i in range(len(self.sb_numbers)):
+                poly = PolynomialFeatures(degree = self.poly_degree)       
+                ylist = ylist + self.train_inputs[i]['Y value'].tolist()
+                templist = templist + self.train_inputs[i]['Temperature'].tolist()
+
+                reflist = reflist +((self.train_labels[i]['Reference'] - self.train_inputs[i]['Y value']).tolist()) # Predicts error
+            indep_vars = np.transpose(np.array([ylist, templist]))
+            dep_vars = np.array(reflist)
+
+            indep_vars_ = poly.fit_transform(indep_vars)
+            print("Feature names: ", poly.get_feature_names_out())
+            self.feature_names = poly.get_feature_names_out()
+
+            # Create regression object and perform regression
+            self.model = linear_model.LinearRegression(fit_intercept=True)
+            self.model.fit(indep_vars_, dep_vars)
+            self.model.coef_[0] = self.model.intercept_
+            print("Model coefficients: ", self.model.coef_)
+
+        if stdtf == True:
+            ylist = []
+            templist = []
+            reflist = []
+            print("Polynomial fit with regression to data of all Smartbricks, inputs and references standard transformed")
+            print('Serial numbers: ', self.sb_numbers)    
+
+            for i in range(len(self.sb_numbers)):
+                poly = PolynomialFeatures(degree = self.poly_degree)       
+                ylist = ylist + self.train_inputs[i]['Y stdtf'].tolist()
+                templist = templist + self.train_inputs[i]['Temp stdtf'].tolist()
+
+                reflist = reflist +((self.train_labels[i]['Yref stdtf'] - self.train_inputs[i]['Y stdtf']).tolist()) # Predicts error
+            indep_vars = np.transpose(np.array([ylist, templist]))
+            dep_vars = np.array(reflist)
+
+            indep_vars_ = poly.fit_transform(indep_vars)
+            print("Feature names: ", poly.get_feature_names_out())
+            print("x0 = Measured angle")
+            print("x1 = Temperature")
+            self.feature_names = poly.get_feature_names_out()
+
+            # Create regression object and perform regression
+            self.model = linear_model.LinearRegression(fit_intercept=True)
+            self.model.fit(indep_vars_, dep_vars)
+            self.model.coef_[0] = self.model.intercept_
+            print("Model coefficients: ", self.model.coef_)
+
+    def trainreference(self, stdtf=True):
+        self.stdtf = stdtf
+        if stdtf == False:
+            ylist = []
+            templist = []
+            reflist = []
+            print("Polynomial fit with regression to data of all Smartbricks, inputs and references NOT standard transformed")
+            print('Serial numbers: ', self.sb_numbers)    
+
+            for i in range(len(self.sb_numbers)):
+                poly = PolynomialFeatures(degree = self.poly_degree)       
+                ylist = ylist + self.train_inputs[i]['Y value'].tolist()
+                templist = templist + self.train_inputs[i]['Temperature'].tolist()
+
+                reflist = reflist +(self.train_labels[i]['Reference'].tolist()) # Predicts reference
+            indep_vars = np.transpose(np.array([ylist, templist]))
+            dep_vars = np.array(reflist)
+
+            indep_vars_ = poly.fit_transform(indep_vars)
+            print("Feature names: ", poly.get_feature_names_out())
+            self.feature_names = poly.get_feature_names_out()
+
+            # Create regression object and perform regression
+            self.model = linear_model.LinearRegression(fit_intercept=True)
+            self.model.fit(indep_vars_, dep_vars)
+            self.model.coef_[0] = self.model.intercept_
+            print("Model coefficients: ", self.model.coef_)
+
+        if stdtf == True:
+            ylist = []
+            templist = []
+            reflist = []
+            print("Polynomial fit with regression to data of all Smartbricks, inputs and references standard transformed")
+            print('Serial numbers: ', self.sb_numbers)    
+
+            for i in range(len(self.sb_numbers)):
+                poly = PolynomialFeatures(degree = self.poly_degree)       
+                ylist = ylist + self.train_inputs[i]['Y stdtf'].tolist()
+                templist = templist + self.train_inputs[i]['Temp stdtf'].tolist()
+
+                reflist = reflist +(self.train_labels[i]['Yref stdtf'].tolist()) # Predicts reference
+            indep_vars = np.transpose(np.array([ylist, templist]))
+            dep_vars = np.array(reflist)
+
+            indep_vars_ = poly.fit_transform(indep_vars)
+            print("Feature names: ", poly.get_feature_names_out())
+            print("x0 = Measured angle")
+            print("x1 = Temperature")
+            self.feature_names = poly.get_feature_names_out()
+
+            # Create regression object and perform regression
+            self.model = linear_model.LinearRegression(fit_intercept=True)
+            self.model.fit(indep_vars_, dep_vars)
+            self.model.coef_[0] = self.model.intercept_
+            print("Model coefficients: ", self.model.coef_)
+
+    def test(self, model=None, error=False, reference=False):
+        if model == None:
+            model=self.model
+        
+        if error == reference:
+            print("Pick either error or reference")
+            return
+
+        self.results_dfs = []
+        if self.stdtf == False:
+            for i in range(len(self.sb_numbers)):
+                self.results_dfs.append(pd.DataFrame())
+                if error:
+                    self.results_dfs[i]["Comp Y"] = self.test_inputs[i]["Y value"] + self.model.coef_[0] + model.coef_[1]*self.test_inputs[i]["Y value"] + model.coef_[2]*self.test_inputs[i]["Temperature"]+ model.coef_[3]*self.test_inputs[i]["Y value"]**2+ model.coef_[4]*self.test_inputs[i]["Y value"]*self.test_inputs[i]["Temperature"]+ model.coef_[5]*self.test_inputs[i]["Temperature"]**2
+                elif reference:
+                    self.results_dfs[i]["Comp Y"] = self.model.coef_[0] + model.coef_[1]*self.test_inputs[i]["Y value"] + model.coef_[2]*self.test_inputs[i]["Temperature"]+ model.coef_[3]*self.test_inputs[i]["Y value"]**2+ model.coef_[4]*self.test_inputs[i]["Y value"]*self.test_inputs[i]["Temperature"]+ model.coef_[5]*self.test_inputs[i]["Temperature"]**2
+                
+                self.results_dfs[i]["Comp error"] = self.test_inputs[i]["Reference"] - self.results_dfs[i]["Comp Y"]
+                self.results_dfs[i]["Uncomp error"] = self.test_inputs[i]["Reference"] - self.test_inputs[i]["Y value"]
+
+                print(str(self.sb_numbers[i]), "---------------------------------------")
+                print("Max absolute uncompensated error", self.results_dfs[i]["Uncomp error"].max())
+                print("Average uncompensated error: ", self.results_dfs[i]["Uncomp error"].mean())
+                print("Min absolute uncompensated error", self.results_dfs[i]["Uncomp error"].min())
+                print("Max absolute compensated error: ", self.results_dfs[i]["Comp error"].max())
+                print("Average compensated error: ", self.results_dfs[i]["Comp error"].mean())
+                print("Min absolute compensated error: ", self.results_dfs[i]["Comp error"].min())
+                print("RMSE uncompensated: ", (self.results_dfs[i]["Uncomp error"]**2).mean()**0.5)
+                print("RMSE compensated: ",  (self.results_dfs[i]["Comp error"]**2).mean()**0.5)
+
+                print("Absolute improvement: ", (self.results_dfs[i]["Uncomp error"]**2).mean()**0.5-(self.results_dfs[i]["Comp error"]**2).mean()**0.5)
+                print("(Negative improvement means deterioration.)")
+                print(" ")
+
+        elif self.stdtf == True:
+            for i in range(len(self.sb_numbers)):
+                self.results_dfs.append(pd.DataFrame())
+                self.results_dfs[i]["Comp Y stdtf"] = self.test_inputs[i]["Y stdtf"] + self.model.coef_[0] + model.coef_[1]*self.test_inputs[i]["Y stdtf"] + model.coef_[2]*self.test_inputs[i]["Temp stdtf"]+ model.coef_[3]*self.test_inputs[i]["Y stdtf"]**2+ model.coef_[4]*self.test_inputs[i]["Y stdtf"]*self.test_inputs[i]["Temp stdtf"]+ model.coef_[5]*self.test_inputs[i]["Temp stdtf"]**2
+                self.results_dfs[i]["Comp error stdtf"] = self.test_labels[i]["Yref stdtf"] - self.results_dfs[i]["Comp Y stdtf"]
+                self.results_dfs[i]["Uncomp error stdtf"] = self.test_labels[i]["Yref stdtf"] - self.test_inputs[i]["Y stdtf"]
+
+                self.results_dfs[i]["Comp Y"] = self.results_dfs[i]["Comp Y stdtf"]*self.y_stds[i] + self.y_means[i]
+                # Below lines is simply errors stdtf but the variables are first un-transformed
+                self.results_dfs[i]["Comp error"] = (self.test_labels[i]["Yref stdtf"]*self.yref_stds[i] + self.yref_means[i]) - (self.results_dfs[i]["Comp Y stdtf"]*self.y_stds[i] + self.y_means[i])
+                self.results_dfs[i]["Uncomp error"] = (self.test_labels[i]["Yref stdtf"]*self.yref_stds[i] + self.yref_means[i]) - (self.test_inputs[i]["Y stdtf"]*self.y_stds[i] + self.y_means[i])
+                
+                print(str(self.sb_numbers[i]), "---------------------------------------")
+                print("Max absolute uncompensated error", self.results_dfs[i]["Uncomp error"].max())
+                print("Average uncompensated error: ", self.results_dfs[i]["Uncomp error"].mean())
+                print("Min absolute uncompensated error", self.results_dfs[i]["Uncomp error"].min())
+                print("Max absolute compensated error: ", self.results_dfs[i]["Comp error"].max())
+                print("Average compensated error: ", self.results_dfs[i]["Comp error"].mean())
+                print("Min absolute compensated error: ", self.results_dfs[i]["Comp error"].min())
+                print("RMSE uncompensated: ", (self.results_dfs[i]["Uncomp error"]**2).mean()**0.5)
+                print("RMSE compensated: ",  (self.results_dfs[i]["Comp error"]**2).mean()**0.5)
+
+                print("Absolute improvement: ", (self.results_dfs[i]["Uncomp error"]**2).mean()**0.5-(self.results_dfs[i]["Comp error"]**2).mean()**0.5)
+                print("(Negative improvement means deterioration.)")
+                print(" ")           
+            return
 
     def polyFitAll(self):
         ylist = []
@@ -565,6 +825,34 @@ class blockbaxAnalyser():
         plt.xlabel("Smartbrick S/N")
         plt.title("Compensated error distribution (deg)")
         plt.show()
+    
+    # ------------------HELPER FUNCTIONS -------------------------------------------
+    def get_corresponding_ymeans(self, y_setting):
+        for y in range(len(self.y_steps)):
+            if y_setting == self.y_steps[y]:
+                return self.y_means[y]
+    def get_corresponding_ystds(self,y_setting):
+        for y in range(len(self.y_steps)):
+            if y_setting == self.y_steps[y]:
+                return self.y_stds[y]
+
+    def get_corresponding_yrefmeans(self,y_setting):
+        for y in range(len(self.y_steps)):
+            if y_setting == self.y_steps[y]:
+                return self.yref_means[y]
+    def get_corresponding_yrefstds(self,y_setting):
+        for y in range(len(self.y_steps)):
+            if y_setting == self.y_steps[y]:
+                return self.yref_stds[y]
+
+    def get_corresponding_tempmeans(self,temp_setting):
+        for t in range(len(self.temp_steps)):
+            if temp_setting == self.temp_steps[t]:
+                return self.temp_means[t]
+    def get_corresponding_tempstds(self,temp_setting):
+        for t in range(len(self.temp_steps)):
+            if temp_setting == self.temp_steps[t]:
+                return self.temp_stds[t]
 
     
 
