@@ -99,6 +99,7 @@ void homeMotors() {
   }
 
   Serial.println("System is finished homing....");
+  delay(10*1000);
 }
 
 void movePitchMotor() {
