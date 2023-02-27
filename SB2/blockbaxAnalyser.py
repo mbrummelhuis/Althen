@@ -589,6 +589,9 @@ class blockbaxAnalyser():
                 test_size=self.test_ratio)
     
     def trainerror(self, stdtf=True):
+        """
+        Create a model that predicts the error between reference and output value
+        """
         self.stdtf = stdtf
         if stdtf == False:
             ylist = []
@@ -645,6 +648,9 @@ class blockbaxAnalyser():
             print("Model coefficients: ", self.model.coef_)
 
     def trainreference(self, stdtf=True):
+        """
+        Create a model that predicts the reference
+        """
         self.stdtf = stdtf
         if stdtf == False:
             ylist = []
@@ -701,6 +707,9 @@ class blockbaxAnalyser():
             print("Model coefficients: ", self.model.coef_)
 
     def test(self, model=None, error=False, reference=False):
+        """
+        Evaluate a model that has been predetermined and specified.
+        """
         if model == None:
             model=self.model
         
@@ -762,6 +771,9 @@ class blockbaxAnalyser():
             return
 
     def polyFitAll(self):
+        """
+        Create a polynomial fit to all Smartbricks (predicing error w.r.t. reference)
+        """
         ylist = []
         templist = []
         reflist = []
@@ -787,8 +799,8 @@ class blockbaxAnalyser():
         self.model.coef_[0] = self.model.intercept_
         print("Model coefficients: ", self.model.coef_)
 
-    def plotModelAll(self):
-        fig = plt.figure()
+    def plotModelAll(self, mode = 'error', size = (12,10)):
+        fig = plt.figure(figsize=size)
         ax = fig.add_subplot(projection='3d')
 
         # FIRST: Plot surface from model
@@ -802,7 +814,10 @@ class blockbaxAnalyser():
 
         # SECOND: Plot scattered data
         for i in range(len(self.sb_numbers)):
-            ax.scatter(self.dfs[i]['Y value'], self.dfs[i]['Temperature'], self.dfs[i]['Reference']-self.dfs[i]['Y value'], color=self.colours[i], label=self.sb_numbers[i])
+            if mode == 'error':
+                ax.scatter(self.dfs[i]['Y value'], self.dfs[i]['Temperature'], self.dfs[i]['Reference']-self.dfs[i]['Y value'], color=self.colours[i], label=self.sb_numbers[i])
+            if mode == 'ref':
+                ax.scatter(self.dfs[i]['Y value'], self.dfs[i]['Temperature'], self.dfs[i]['Reference'], color=self.colours[i], label=self.sb_numbers[i])
 
         # Cleanup
         ax.set_xlabel("Measured angle")
