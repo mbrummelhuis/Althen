@@ -122,10 +122,20 @@ class blockbaxAnalyser():
             zero_df = self.dfs[i].loc[(self.dfs[i].index > delete_before)]
             zero_df = zero_df.loc[(zero_df.index < delete_after)]
             offset = zero_df["Y value"].mean()
-
-            # Subtract the 
-            self.dfs[i]["Y value"] -= offset
-            self.offsets.append(offset)
+            if offset != offset:
+                # offset is NaN, determine new offset
+                delete_before_nan = pd.Timestamp("2023-02-23 15:00:00")
+                delete_after_nan = pd.Timestamp("2023-02-23 17:00:00")
+                zero_df = self.dfs[i].loc[(self.dfs[i].index > delete_before_nan)]
+                zero_df = zero_df.loc[(zero_df.index < delete_after_nan)]
+                offset = zero_df["Y value"].mean()    
+                # Subtract the offset
+                self.dfs[i]["Y value"] -= offset
+                self.offsets.append(offset)
+            else:           
+                # Subtract the offset
+                self.dfs[i]["Y value"] -= offset
+                self.offsets.append(offset)
 
         # Ref offset
         zero_df = self.refdf.loc[(self.refdf.index > delete_before)]
@@ -213,6 +223,7 @@ class blockbaxAnalyser():
             self.dfs[i]["Reference temp"] = ref_temp_column
 
             self.dfs[i]["Delta ref"] = self.dfs[i]["Reference"]-self.dfs[i]["Y value"]
+
             # Delete rows if delta is larger or smaller than 1.0
             self.dfs[i] = self.dfs[i][self.dfs[i]["Delta ref"]< 1.0]
             self.dfs[i] = self.dfs[i][self.dfs[i]["Delta ref"]>-1.0]
